@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Курсы</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.21.5/dist/css/uikit.min.css">
+</head>
+<body>
+    <div class="uk-container uk-margin-top">
+        <div class="uk-flex uk-flex-between uk-margin-bottom">
+            <h1>Список курсов</h1>
+            <div>
+                <span class="uk-badge">{{ role }}</span>
+                <a href="{% url 'logout' %}" class="uk-button uk-button-small uk-button-default">Выйти</a>
+            </div>
+        </div>
+
+        <!-- Кнопка добавления - ПОКАЗЫВАЕТСЯ ТОЛЬКО ПРЕПОДАВАТЕЛЮ -->
+        {% if role == 'Преподаватель' %}
+            <div class="uk-margin-bottom">
+                <a href="{% url 'add_course' %}" class="uk-button uk-button-primary">
+                    <span uk-icon="plus"></span> Добавить курс
+                </a>
+            </div>
+        {% endif %}
+
+        <!-- Список курсов -->
+        <div class="uk-grid uk-child-width-1-3@m" uk-grid>
+            {% for course in courses %}
+                <div>
+                    <div class="uk-card uk-card-default uk-card-body">
+                        <h3 class="uk-card-title">{{ course.course_title }}</h3>
+                        <p>{{ course.description }}</p>
+
+                        <!-- Разные кнопки для разных ролей -->
+                        {% if role == 'Преподаватель' %}
+                            <a href="#" class="uk-button uk-button-small uk-button-primary">Редактировать</a>
+                            <a href="#" class="uk-button uk-button-small uk-button-danger">Удалить</a>
+                        {% else %}
+                            <a href="#" class="uk-button uk-button-small uk-button-default">Записаться</a>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.5/dist/js/uikit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.5/dist/js/uikit-icons.min.js"></script>
+</body>
+</html>
