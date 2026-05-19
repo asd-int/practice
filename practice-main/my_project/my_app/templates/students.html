@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Студенты{% endblock %}
+
+{% block content %}
+<div class="uk-margin-medium-bottom" uk-grid>
+    <div class="uk-width-expand">
+        <form method="GET" class="uk-search uk-search-default uk-width-1-1">
+            <span uk-search-icon></span>
+            <input class="uk-search-input" type="search" name="search" value="{{ search_query }}" placeholder="Поиск по фамилии...">
+        </form>
+    </div>
+    <div class="uk-width-auto">
+        <button class="uk-button uk-button-default" type="button">Все курсы <span uk-icon="icon: chevron-down"></span></button>
+
+        {% if request.session.role == 'Teacher' %}
+            <button class="uk-button uk-button-primary uk-margin-small-left" uk-toggle="target: #modal-add-student">Добавить</button>
+        {% endif %}
+    </div>
+</div>
+
+<div class="uk-overflow-auto">
+    <table class="uk-table uk-table-hover uk-table-divider uk-table-middle uk-background-white" style="border: 1px solid #e5e5e5; border-radius: 8px; border-collapse: separate; border-spacing: 0;">
+        <thead>
+            <tr style="background: #fcfcfc;">
+                <th class="uk-table-shrink uk-padding-small">Студент</th>
+                <th>Курс</th>
+                <th>Email</th>
+                <th>Успеваемость</th>
+                {% if request.session.role == 'Teacher' %}
+                    <th class="uk-table-shrink">Действия</th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td class="uk-text-nowrap">
+                    <a href="{% url 'student_detail' student.student_id %}" class="uk-link-reset uk-text-primary">
+                        {{ student.full_name }}
+                    </a>
+                </td>
+                <td>{{ student.course_title }}</td>
+                <td class="uk-text-muted">{{ student.email }}</td>
+                <td>
+                    <span class="uk-text-bold">{{ student.progress }}%</span>
+                    <progress class="uk-progress uk-margin-remove-top uk-margin-remove-bottom" value="{{ student.progress }}" max="100" style="height: 6px;"></progress>
+                </td>
+                {% if request.session.role == 'Teacher' %}
+                <td>
+                    <a class="uk-icon-button" uk-icon="more" type="button"></a>
+                    <div uk-dropdown="mode: click; pos: bottom-right">
+                        <ul class="uk-nav uk-dropdown-nav">
+                            <li><a href="{% url 'student_detail' student.student_id %}">Открыть профиль</a></li>
+                            <li><a href="#">Редактировать</a></li>
+                            <li class="uk-nav-divider"></li>
+                            <li><a href="#" class="uk-text-danger">Исключить</a></li>
+                        </ul>
+                    </div>
+                </td>
+                {% endif %}
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="{% if request.session.role == 'Teacher' %}5{% else %}4{% endif %}" class="uk-text-center uk-text-muted">Нет записей о студентах.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if request.session.role == 'Teacher' %}
+<div id="modal-add-student" uk-modal>
+    <div class="uk-modal-dialog uk-modal-body">
+        <button class="uk-modal-close-default" type="button" uk-close></button>
+        <h2 class="uk-modal-title uk-h3">Добавить студента</h2>
+
+        <form method="POST" action="{% url 'student_add' %}">
+            {% csrf_token %}
+            <div class="uk-margin">
+                <label class="uk-form-label">Имя</label>
+                <input class="uk-input" type="text" name="first_name" required>
+            </div>
+            <div class="uk-margin">
+                <label class="uk-form-label">Фамилия</label>
+                <input class="uk-input" type="text" name="last_name" required>
+            </div>
+            <div class="uk-margin">
+                <label class="uk-form-label">Имя пользователя (Логин)</label>
+                <input class="uk-input" type="text" name="username" required>
+            </div>
+            <div class="uk-margin">
+                <label class="uk-form-label">Пароль</label>
+                <input class="uk-input" type="password" name="password" required>
+            </div>
+            <div class="uk-margin">
+                <label class="uk-form-label">Выбрать курс для зачисления</label>
+                <select class="uk-select" name="course_id" required>
+                    {% for course_item in all_courses %}
+                        <option value="{{ course_item.id }}">{{ course_item.course_title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <input type="hidden" name="role_perm_id" value="1">
+
+            <p class="uk-text-right">
+                <button class="uk-button uk-button-default uk-modal-close" type="button">Отмена</button>
+                <button class="uk-button uk-button-primary" type="submit">Добавить</button>
+            </p>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

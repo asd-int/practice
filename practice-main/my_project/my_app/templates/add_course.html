@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block header %}Добавить курс{% endblock %}
+
+{% block content %}
+
+<form method="POST" class="uk-form-stacked">
+    {% csrf_token %}
+
+    <div class="uk-margin">
+        <label class="uk-form-label">Название</label>
+        <input class="uk-input" name="course_title">
+    </div>
+
+    <div class="uk-margin">
+        <label class="uk-form-label">Описание</label>
+        <textarea class="uk-textarea" name="description"></textarea>
+    </div>
+
+    <div class="uk-grid-small" uk-grid>
+        <div class="uk-width-1-2">
+            <input class="uk-input" type="date" name="start_date">
+        </div>
+        <div class="uk-width-1-2">
+            <input class="uk-input" type="date" name="end_date">
+        </div>
+    </div>
+
+    <button class="uk-button uk-button-primary uk-margin-top">Сохранить</button>
+</form>
+
+{% endblock %}

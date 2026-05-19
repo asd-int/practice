@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LMS Панель{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.21.6/dist/css/uikit.min.css" />
+    <style>
+        body { background-color: #f8f9fa; }
+        .sidebar { min-height: 100vh; background: #ffffff; border-right: 1px solid #e5e5e5; }
+        .main-content { min-height: 100vh; }
+        .navbar-top { background: #ffffff; border-bottom: 1px solid #e5e5e5; padding: 15px 30px; }
+    </style>
+</head>
+<body>
+
+    <div class="uk-grid-collapse" uk-grid>
+        <div class="uk-width-1-5@m sidebar uk-padding">
+            <div class="uk-text-bold uk-text-lead uk-margin-medium-bottom">Название</div>
+
+            <ul class="uk-nav uk-nav-default uk-nav-parent-icon" uk-nav>
+                <li class="{% if request.resolver_match.url_name == 'dashboard' %}uk-active{% endif %}">
+                    <a href="{% url 'dashboard' %}"><span uk-icon="icon: grid; ratio: 0.9" class="uk-margin-small-right"></span> Дашборд</a>
+                </li>
+                <li class="{% if request.resolver_match.url_name == 'course_list' %}uk-active{% endif %}">
+                    <a href="{% url 'course_list' %}"><span uk-icon="icon: album; ratio: 0.9" class="uk-margin-small-right"></span> Курсы</a>
+                </li>
+                <li class="{% if request.resolver_match.url_name == 'student_list' %}uk-active{% endif %}">
+                    <a href="{% url 'student_list' %}"><span uk-icon="icon: users; ratio: 0.9" class="uk-margin-small-right"></span> Студенты</a>
+                </li>
+                <li>
+                    <a href="#"><span uk-icon="icon: user; ratio: 0.9" class="uk-margin-small-right"></span> Преподаватели</a>
+                </li>
+                <li>
+                    <a href="#"><span uk-icon="icon: copy; ratio: 0.9" class="uk-margin-small-right"></span> Отчеты</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="uk-width-4-5@m main-content">
+            <div class="navbar-top uk-flex uk-flex-between uk-flex-middle">
+                <div>
+                    <h1 class="uk-h3 uk-margin-remove">{% block page_title %}{% endblock %}</h1>
+                </div>
+
+                <div class="uk-flex uk-flex-middle">
+                    {% if request.session.user_id %}
+                        <div class="uk-margin-medium-right uk-text-right">
+                            <div class="uk-text-bold uk-text-sm">{{ request.session.username }}</div>
+                            <div class="uk-text-muted uk-text-meta">
+                                Роль: {% if request.session.role == 'Teacher' %}Преподаватель{% else %}Студент{% endif %}
+                            </div>
+                        </div>
+                        <a href="{% url 'logout' %}" class="uk-button uk-button-text uk-text-danger uk-margin-medium-right">Выйти</a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="uk-button uk-button-text uk-text-primary uk-margin-medium-right">Войти</a>
+                    {% endif %}
+                    <div class="uk-border-circle" style="width: 35px; height: 35px; background: #e5e5e5; display: inline-block;"></div>
+                </div>
+            </div>
+
+            <div class="uk-padding-large">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.6/dist/js/uikit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.6/dist/js/uikit-icons.min.js"></script>
+</body>
+</html>

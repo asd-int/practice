@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block page_title %}
+<a href="{% url 'student_list' %}" class="uk-icon-link uk-margin-small-right" uk-icon="arrow-left"></a> Студент
+{% endblock %}
+
+{% block content %}
+<div class="uk-card uk-card-default uk-card-body uk-margin-medium-bottom" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;">
+    <div uk-grid class="uk-flex-middle">
+        <div class="uk-width-auto">
+            <div style="width: 100px; height: 100px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px;" class="uk-flex uk-flex-center uk-flex-middle">
+                <span uk-icon="icon: user; ratio: 2.5" class="uk-text-muted"></span>
+            </div>
+        </div>
+        <div class="uk-width-expand">
+            <h2 class="uk-h3 uk-margin-remove-bottom">{{ student.get_full_name }}</h2>
+            <p class="uk-text-muted uk-margin-small-top">Студент платформы LMS. Зарегистрирован: {{ student.created_at|date:"d.m.Y" }}</p>
+        </div>
+    </div>
+</div>
+
+<ul class="uk-subnav uk-subnav-pill" uk-switcher="connect: #student-tabs">
+    <li><a href="#">Обзор</a></li>
+    <li><a href="#">Курсы</a></li>
+    <li><a href="#">Оценки</a></li>
+    <li><a href="#">Задания</a></li>
+    <li><a href="#">Активность</a></li>
+</ul>
+
+<ul id="student-tabs" class="uk-switcher uk-margin">
+    <li>
+        <div class="uk-card uk-card-default uk-card-body" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px; min-height: 200px;">
+            <h4 class="uk-card-title">О студенте</h4>
+            <p class="uk-text-muted">Здесь выводится подробный лог или текстовое описание, имитирующее штрихи на вашем макете. Можно вывести информацию о последних действиях или личные заметки куратора.</p>
+        </div>
+    </li>
+    
+    <li>
+        <div class="uk-card uk-card-default uk-card-body" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;">
+            <h4 class="uk-card-title">Текущие курсы</h4>
+            <ul class="uk-list uk-list-divider">
+                {% for enrollment in enrolled_courses %}
+                <li>{{ enrollment.course.course_title }} <span class="uk-text-muted uk-text-small">(с {{ enrollment.course.start_date }})</span></li>
+                {% empty %}
+                <li class="uk-text-muted">Студент еще не зачислен ни на один курс.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </li>
+
+    <li><div class="uk-card uk-card-default uk-card-body" style="border: 1px solid #e5e5e5; box-shadow: none;">Здесь будут оценки из модели Gradebook.</div></li>
+    <li><div class="uk-card uk-card-default uk-card-body" style="border: 1px solid #e5e5e5; box-shadow: none;">Список сданных Answer_Exercise.</div></li>
+    <li><div class="uk-card uk-card-default uk-card-body" style="border: 1px solid #e5e5e5; box-shadow: none;">Лог посещаемости.</div></li>
+</ul>
+{% endblock %}

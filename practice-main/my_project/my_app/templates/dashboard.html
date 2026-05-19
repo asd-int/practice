@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Дашборд{% endblock %}
+
+{% block content %}
+<div class="uk-grid-match uk-child-width-1-4@m uk-grid-small" uk-grid>
+    <div>
+        <div class="uk-card uk-card-default uk-card-body uk-text-center uk-card-hover" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;">
+            <h3 class="uk-heading-medium uk-margin-remove-bottom">{{ courses_count }}</h3>
+            <p class="uk-text-muted uk-margin-small-top">Курсов</p>
+        </div>
+    </div>
+
+    <div>
+        <div class="uk-card uk-card-default uk-card-body uk-text-center uk-card-hover" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;">
+            <h3 class="uk-heading-medium uk-margin-remove-bottom">{{ students_count }}</h3>
+            <p class="uk-text-muted uk-margin-small-top">Студентов</p>
+        </div>
+    </div>
+
+    <div>
+        <div class="uk-card uk-card-default uk-card-body uk-text-center uk-card-hover" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;">
+            <h3 class="uk-heading-medium uk-margin-remove-bottom">{{ exercises_count }}</h3>
+            <p class="uk-text-muted uk-margin-small-top">Заданий</p>
+        </div>
+    </div>
+
+    <div>
+        <div class="uk-card uk-card-default uk-card-body uk-text-center uk-card-hover" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;">
+            <h3 class="uk-heading-medium uk-margin-remove-bottom">{{ avg_progress }}%</h3>
+            <p class="uk-text-muted uk-margin-small-top">Успеваемость</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

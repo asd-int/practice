@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block page_title %}{{ course.course_title }}{% endblock %}
+
+{% block content %}
+<div class="uk-alert-warning" uk-alert>Текущая роль: "{{ request.session.role }}"</div>
+
+<div class="uk-margin-medium-bottom" uk-grid>
+    <div class="uk-width-expand">
+        <p class="uk-text-muted uk-margin-remove">{{ course.description|default:"Описание курса отсутствует." }}</p>
+    </div>
+    {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
+    <div class="uk-width-auto">
+        <button class="uk-button uk-button-primary" uk-toggle="target: #modal-add-content">Добавить материал</button>
+    </div>
+    {% endif %}
+</div>
+
+<ul class="uk-subnav uk-subnav-pill" uk-switcher="connect: #course-content-tabs">
+    <li><a href="#">Лекции</a></li>
+    <li><a href="#">Задания</a></li>
+    <li><a href="#">Тесты</a></li>
+</ul>
+
+<ul id="course-content-tabs" class="uk-switcher uk-margin">
+
+    <li>
+        <div class="uk-card uk-card-default uk-padding-small">
+            <table class="uk-table uk-table-divider uk-table-middle">
+                <thead>
+                    <tr>
+                        {% if request.session.role|lower == 'student' or request.session.role|lower == 'студент' %}
+                            <th class="uk-table-shrink">Статус</th>
+                        {% endif %}
+                        <th>Название</th>
+                        <th>Описание</th>
+                        <th>Файл</th>
+                        {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}<th>Действие</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lecture in lectures %}
+                    <tr>
+                        {% if request.session.role|lower == 'student' or request.session.role|lower == 'студент' %}
+                        <td>
+                            <form method="POST" action="{% url 'toggle_status' course.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="item_type" value="lecture">
+                                <input type="hidden" name="item_id" value="{{ lecture.id }}">
+                                <input type="checkbox" class="uk-checkbox" onChange="this.form.submit()" {% if lecture.id in completed_lectures %}checked{% endif %}>
+                            </form>
+                        </td>
+                        {% endif %}
+                        <td class="uk-text-bold">{{ lecture.lecture_title }}</td>
+                        <td>{{ lecture.description|default:"-" }}</td>
+                        <td>{% if lecture.content %}<a href="{{ lecture.content.url }}" download>Скачать</a>{% else %}-{% endif %}</td>
+                        {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
+                        <td><a href="{% url 'delete_content' course.id 'lecture' lecture.id %}" class="uk-text-danger" onclick="return confirm('Удалить?')">Удалить</a></td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </li>
+
+    <li>
+        <div class="uk-card uk-card-default uk-padding-small">
+            <table class="uk-table uk-table-divider uk-table-middle">
+                <thead>
+                    <tr>
+                        {% if request.session.role|lower == 'student' or request.session.role|lower == 'студент' %}
+                            <th class="uk-table-shrink">Статус</th>
+                        {% endif %}
+                        <th>Название</th>
+                        <th>Срок</th>
+                        <th>Файл</th>
+                        {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}<th>Действие</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exe in exercises %}
+                    <tr>
+                        {% if request.session.role|lower == 'student' or request.session.role|lower == 'студент' %}
+                        <td>
+                            <form method="POST" action="{% url 'toggle_status' course.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="item_type" value="exercise">
+                                <input type="hidden" name="item_id" value="{{ exe.id }}">
+                                <input type="checkbox" class="uk-checkbox" onChange="this.form.submit()" {% if exe.id in completed_exercises %}checked{% endif %}>
+                            </form>
+                        </td>
+                        {% endif %}
+                        <td class="uk-text-bold">{{ exe.exercise_title }}</td>
+                        <td class="uk-text-danger">{{ exe.due_date|date:"d.m.Y" }}</td>
+                        <td>{% if exe.content %}<a href="{{ exe.content.url }}" download>Скачать</a>{% else %}-{% endif %}</td>
+                        {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
+                        <td><a href="{% url 'delete_content' course.id 'exercise' exe.id %}" class="uk-text-danger" onclick="return confirm('Удалить?')">Удалить</a></td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </li>
+
+    <li>
+        <div class="uk-card uk-card-default uk-padding-small">
+            <table class="uk-table uk-table-divider uk-table-middle">
+                <thead>
+                    <tr>
+                        {% if request.session.role|lower == 'student' or request.session.role|lower == 'студент' %}
+                            <th class="uk-table-shrink">Статус</th>
+                        {% endif %}
+                        <th>Название</th>
+                        <th>Ссылка</th>
+                        {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}<th>Действие</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for quiz in quizzes %}
+                    <tr>
+                        {% if request.session.role|lower == 'student' or request.session.role|lower == 'студент' %}
+                        <td>
+                            <form method="POST" action="{% url 'toggle_status' course.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="item_type" value="quiz">
+                                <input type="hidden" name="item_id" value="{{ quiz.id }}">
+                                <input type="checkbox" class="uk-checkbox" onChange="this.form.submit()" {% if quiz.id in completed_quizzes %}checked{% endif %}>
+                            </form>
+                        </td>
+                        {% endif %}
+                        <td class="uk-text-bold">{{ quiz.quiz_title }}</td>
+                        <td><a href="{{ quiz.link_quiz }}" target="_blank">Перейти</a></td>
+                        {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
+                        <td><a href="{% url 'delete_content' course.id 'quiz' quiz.id %}" class="uk-text-danger" onclick="return confirm('Удалить?')">Удалить</a></td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </li>
+</ul>
+
+{% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
+<div id="modal-add-content" uk-modal>
+    <div class="uk-modal-dialog uk-modal-body">
+        <button class="uk-modal-close-default" type="button" uk-close></button>
+        <h2 class="uk-modal-title uk-h3">Добавить материал</h2>
+        <form method="POST" action="{% url 'add_content' course.id %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="uk-margin">
+                <select class="uk-select" name="content_type" required>
+                    <option value="lecture">Лекция</option>
+                    <option value="exercise">Задание</option>
+                    <option value="quiz">Тест</option>
+                </select>
+            </div>
+            <div class="uk-margin"><input class="uk-input" type="text" name="title" placeholder="Название" required></div>
+            <div class="uk-margin"><textarea class="uk-textarea" name="description" placeholder="Описание"></textarea></div>
+            <div class="uk-margin" uk-form-custom="target: true"><input type="file" name="content_file"><input class="uk-input" type="text" placeholder="Выберите файл..." disabled></div>
+            <div class="uk-margin"><input class="uk-input" type="date" name="due_date"></div>
+            <div class="uk-margin"><input class="uk-input" type="text" name="link_quiz" placeholder="URL теста"></div>
+            <button class="uk-button uk-button-primary" type="submit">Создать</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

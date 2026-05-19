@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Курсы{% endblock %}
+
+{% block content %}
+<div class="uk-margin-medium-bottom" uk-grid>
+    <div class="uk-width-expand">
+        <form method="GET" class="uk-search uk-search-default uk-width-1-1">
+            <span uk-search-icon></span>
+            <input class="uk-search-input" type="search" name="search" value="{{ search_query }}" placeholder="Поиск курса...">
+        </form>
+    </div>
+    <div class="uk-width-auto">
+        <button class="uk-button uk-button-default" type="button">Все курсы <span uk-icon="icon: chevron-down"></span></button>
+        <div uk-dropdown="mode: click">
+            <ul class="uk-nav uk-dropdown-nav">
+                <li class="uk-active"><a href="#">Все курсы</a></li>
+                <li><a href="#">Активные</a></li>
+                <li><a href="#">Прошедшие</a></li>
+            </ul>
+        </div>
+
+        {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
+            <button class="uk-button uk-button-primary uk-margin-small-left" uk-toggle="target: #modal-add-course">Добавить</button>
+        {% endif %}
+    </div>
+</div>
+
+<div class="uk-grid-medium" uk-grid>
+    {% for item in courses %}
+    <div class="uk-width-1-1">
+        <div class="uk-card uk-card-default uk-grid-collapse uk-margin uk-padding" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;" uk-grid>
+
+            <div class="uk-width-auto@s uk-flex uk-flex-center uk-flex-middle bg-light" style="background: #fafafa; border: 1px dashed #ccc; height: 120px; width: 120px;">
+                <span uk-icon="icon: image; ratio: 2" class="uk-text-muted"></span>
+            </div>
+
+            <div class="uk-width-expand@s uk-padding-small">
+                <h3 class="uk-card-title uk-margin-remove-bottom">
+                    <a href="{% url 'course_detail' item.instance.id %}" class="uk-link-reset uk-text-primary">
+                         {{ item.instance.course_title }}
+                    </a>
+                </h3>
+                <p class="uk-text-muted uk-margin-small-top uk-margin-remove-bottom">{{ item.instance.description|default:"Описание отсутствует" }}</p>
+                <div class="uk-margin-small-top">
+                    <span class="uk-label uk-label-success">{{ item.students_count }} Студентов</span>
+                </div>
+            </div>
+
+            {% if request.session.role|lower == 'student' or request.session.role|lower == 'студент' %}
+            <div class="uk-width-1-4@s uk-flex uk-flex-column uk-flex-center uk-padding-small">
+                <div class="uk-text-right uk-text-muted uk-text-small uk-margin-small-bottom">Прогресс: {{ item.progress }}%</div>
+                <progress class="uk-progress uk-margin-remove" value="{{ item.progress }}" max="100"></progress>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+    {% empty %}
+    <div class="uk-width-1-1 uk-text-center uk-text-muted uk-margin-large-top">Курсы не найдены.</div>
+    {% endfor %}
+</div>
+
+<ul class="uk-pagination uk-flex-center uk-margin-large-top" uk-margin>
+    <li><a href="#"><span uk-pagination-previous></span></a></li>
+    <li class="uk-active"><span>1</span></li>
+    <li><a href="#">2</a></li>
+    <li><a href="#">3</a></li>
+    <li><a href="#"><span uk-pagination-next></span></a></li>
+</ul>
+
+{% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
+<div id="modal-add-course" uk-modal>
+    <div class="uk-modal-dialog uk-modal-body">
+        <button class="uk-modal-close-default" type="button" uk-close></button>
+        <h2 class="uk-modal-title uk-h3">Добавить новый курс</h2>
+
+        <form method="POST" action="{% url 'course_add' %}">
+            {% csrf_token %}
+            <div class="uk-margin">
+                <label class="uk-form-label">Название курса</label>
+                <input class="uk-input" type="text" name="course_title" required>
+            </div>
+            <div class="uk-margin">
+                <label class="uk-form-label">Описание</label>
+                <textarea class="uk-textarea" name="description" rows="3"></textarea>
+            </div>
+            <div class="uk-margin">
+                <label class="uk-form-label">Дата начала</label>
+                <input class="uk-input" type="date" name="start_date" required>
+            </div>
+            <div class="uk-margin">
+                <label class="uk-form-label">Дата окончания</label>
+                <input class="uk-input" type="date" name="end_date" required>
+            </div>
+            <input type="hidden" name="author_id" value="{{ request.session.user_id }}">
+
+            <p class="uk-text-right">
+                <button class="uk-button uk-button-default uk-modal-close" type="button">Отмена</button>
+                <button class="uk-button uk-button-primary" type="submit">Создать</button>
+            </p>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

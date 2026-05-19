@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Вход в систему</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.21.6/dist/css/uikit.min.css" />
+</head>
+<body class="uk-flex uk-flex-center uk-flex-middle" style="height: 100vh; background: #f8f9fa;">
+
+    <div class="uk-width-medium uk-padding uk-background-white" style="border: 1px solid #e5e5e5; border-radius: 8px;">
+        <h3 class="uk-text-bold uk-text-center uk-margin-remove-bottom">Добро пожаловать!</h3>
+        <p class="uk-text-muted uk-text-small uk-text-center uk-margin-small-top">Вход в LMS панель</p>
+
+        {% if error %}
+            <div class="uk-alert-danger uk-text-small uk-padding-small" uk-alert>{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="{% url 'login' %}" class="uk-margin-medium-top">
+            {% csrf_token %}
+            <div class="uk-margin-small">
+                <input class="uk-input" type="text" name="username" placeholder="Логин" required>
+            </div>
+            <div class="uk-margin-small">
+                <input class="uk-input" type="password" name="password" placeholder="Пароль" required>
+            </div>
+            <div class="uk-margin-medium-top">
+                <button class="uk-button uk-button-primary uk-width-1-1" type="submit">Войти</button>
+            </div>
+        </form>
+        <p class="uk-text-small uk-text-center uk-margin-medium-top">
+            Нет аккаунта? <a href="{% url 'register' %}">Регистрация</a>
+        </p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.6/dist/js/uikit.min.js"></script>
+</body>
+</html>
