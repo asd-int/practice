@@ -3,7 +3,6 @@
 {% block page_title %}{{ course.course_title }}{% endblock %}
 
 {% block content %}
-<div class="uk-alert-warning" uk-alert>Текущая роль: "{{ request.session.role }}"</div>
 
 <div class="uk-margin-medium-bottom" uk-grid>
     <div class="uk-width-expand">
@@ -60,7 +59,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="{% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}5{% else %}4{% endif %}" class="uk-text-center uk-text-muted">Лекций пока нет.</td>
+                        <td colspan="4" class="uk-text-center uk-text-muted">Лекций пока нет.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -80,7 +79,7 @@
                         <th>Срок</th>
                         <th>Файл задания</th>
                         {% if request.session.role|lower == 'student' or request.session.role|lower == 'студент' %}
-                            <th>Отправить ответ</th>
+                            <th>Действие / Ответ</th>
                         {% endif %}
                         {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}<th>Действие</th>{% endif %}
                     </tr>
@@ -99,14 +98,26 @@
 
                         {% if request.session.role|lower == 'student' or request.session.role|lower == 'студент' %}
                         <td>
-                            <form method="POST" action="{% url 'submit_answer' course.id exe.id %}" enctype="multipart/form-data" class="uk-flex uk-flex-middle">
-                                {% csrf_token %}
-                                <div uk-form-custom="target: true">
-                                    <input type="file" name="answer_file" required>
-                                    <button class="uk-button uk-button-default uk-button-small" type="button" tabindex="-1">Файл</button>
+                            {% if exe.id in completed_exercises %}
+                                <div class="uk-flex uk-flex-middle">
+                                    <span class="uk-text-success uk-text-small uk-margin-small-right"><span uk-icon="check"></span> Сдано</span>
+                                    <form method="POST" action="{% url 'delete_answer' course.id exe.id %}" onsubmit="return confirm('Вы уверены, что хотите удалить свой ответ и отозвать работу?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="uk-button uk-button-danger uk-button-small" style="padding: 2px 8px; font-size: 0.75rem;">
+                                            <span uk-icon="icon: trash; ratio: 0.8"></span> Удалить ответ
+                                        </button>
+                                    </form>
                                 </div>
-                                <button class="uk-button uk-button-primary uk-button-small uk-margin-small-left" type="submit">Сдать</button>
-                            </form>
+                            {% else %}
+                                <form method="POST" action="{% url 'submit_answer' course.id exe.id %}" enctype="multipart/form-data" class="uk-flex uk-flex-middle">
+                                    {% csrf_token %}
+                                    <div uk-form-custom="target: true">
+                                        <input type="file" name="answer_file" required>
+                                        <button class="uk-button uk-button-default uk-button-small" type="button" tabindex="-1">Файл</button>
+                                    </div>
+                                    <button class="uk-button uk-button-primary uk-button-small uk-margin-small-left" type="submit">Сдать</button>
+                                </form>
+                            {% endif %}
                         </td>
                         {% endif %}
 
@@ -120,22 +131,29 @@
                     {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
                     <tr>
                         <td colspan="5" class="uk-background-muted uk-padding-remove-vertical">
-                            <div class="uk-padding-small">
-                                <span class="uk-text-bold uk-text-small">Присланные ответы студентов:</span>
-                                <ul class="uk-list uk-list-bullet uk-margin-remove-top">
+                            <div class="uk-padding-small" style="background: #f8f9fa; border-left: 4px solid #3498db;">
+                                <span class="uk-text-bold uk-text-small uk-text-primary">
+                                    <span uk-icon="icon: receiver; ratio: 0.8"></span> Присланные ответы студентов:
+                                </span>
+                                <ul class="uk-list uk-list-divider uk-margin-small-top">
                                     {% for ans in submitted_answers %}
                                         {% if ans.exercise_id.id == exe.id %}
-                                            <li>
-                                                <strong>{{ ans.user_id.last_name }} {{ ans.user_id.first_name }}</strong>
-                                                (<span class="uk-text-muted">{{ ans.created_at|date:"d.m H:i" }}</span>):
-                                                <a href="{{ ans.answer_content.url }}" download class="uk-link-heading uk-text-primary"><span uk-icon="download"></span> Скачать ответ</a>
-                                                {% if ans.answer_text %}<span class="uk-text-italic"> — "{{ ans.answer_text }}"</span>{% endif %}
+                                            <li class="uk-flex uk-flex-between uk-flex-middle">
+                                                <div>
+                                                    <strong class="uk-text-emphasis">{{ ans.user_id.last_name }} {{ ans.user_id.first_name }}</strong>
+                                                    <span class="uk-text-muted uk-text-meta">({{ ans.created_at|date:"d.m.Y H:i" }})</span>
+                                                    {% if ans.answer_text %}<p class="uk-margin-remove uk-text-italic uk-text-small">«{{ ans.answer_text }}»</p>{% endif %}
+                                                </div>
+                                                <div>
+                                                    <a href="{{ ans.answer_content.url }}" download class="uk-button uk-button-text uk-text-primary"><span uk-icon="download"></span> Скачать файл</a>
+                                                </div>
                                             </li>
                                         {% endif %}
-                                    {% empty %}
-                                        <li class="uk-text-muted uk-text-meta">Ответов пока никто не прислал.</li>
                                     {% endfor %}
                                 </ul>
+                                <div class="uk-text-meta uk-text-italic uk-margin-small-top">
+                                    <small class="uk-text-muted">Если список выше пуст — ответов на это задание ещё никто не прислал.</small>
+                                </div>
                             </div>
                         </td>
                     </tr>
@@ -143,7 +161,7 @@
 
                     {% empty %}
                     <tr>
-                        <td colspan="{% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}5{% else %}5{% endif %}" class="uk-text-center uk-text-muted">Заданий пока нет.</td>
+                        <td colspan="5" class="uk-text-center uk-text-muted">Заданий пока нет.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -187,7 +205,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="{% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}4{% else %}3{% endif %}" class="uk-text-center uk-text-muted">Тестов пока нет.</td>
+                        <td colspan="4" class="uk-text-center uk-text-muted">Тестов пока нет.</td>
                     </tr>
                     {% endfor %}
                 </tbody>

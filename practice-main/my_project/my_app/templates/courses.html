@@ -7,7 +7,6 @@
     <div class="uk-width-expand@m">
         <form method="GET" class="uk-grid-small" uk-grid>
             <input type="hidden" name="status" value="{{ request.GET.status|default:'all' }}">
-
             <div class="uk-width-expand">
                 <div class="uk-inline uk-width-1-1">
                     <span class="uk-form-icon" uk-search-icon></span>
@@ -38,7 +37,7 @@
             </div>
         {% endwith %}
 
-        {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
+        {% if request.session.role == 'Преподаватель' %}
             <button class="uk-button uk-button-primary uk-margin-small-left" uk-toggle="target: #modal-add-course">Добавить</button>
         {% endif %}
     </div>
@@ -47,7 +46,20 @@
 <div class="uk-grid-medium" uk-grid>
     {% for item in courses %}
         <div class="uk-width-1-1">
-            <div class="uk-card uk-card-default uk-padding uk-flex-middle" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;" uk-grid>
+            <div class="uk-card uk-card-default uk-padding uk-flex-middle uk-position-relative" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;" uk-grid>
+                {% if request.session.role == 'Преподаватель' %}
+                    {% if request.session.user_id == item.instance.user_id.id %}
+                        <div class="uk-position-top-right uk-position-small">
+                            <form action="{% url 'course_delete' item.instance.id %}" method="POST" onsubmit="return confirm('Вы уверены, что хотите удалить курс «{{ item.instance.course_title }}»?');">
+                                {% csrf_token %}
+                                <button type="submit" class="uk-button uk-button-text uk-text-danger" title="Удалить курс">
+                                    <span uk-icon="icon: trash; ratio: 1.1"></span>
+                                </button>
+                            </form>
+                        </div>
+                    {% endif %}
+                {% endif %}
+
                 <div class="uk-width-1-1 uk-padding-remove-vertical">
                     <h3 class="uk-card-title uk-margin-remove-bottom">
                         <a href="{% url 'course_detail' item.instance.id %}" class="uk-link-reset uk-text-primary uk-text-bold">
@@ -58,19 +70,36 @@
                         <span uk-icon="icon: calendar; ratio: 0.8" class="uk-margin-small-right"></span>
                         Срок: {{ item.instance.start_date|date:"d.m.Y" }} — {{ item.instance.end_date|date:"d.m.Y" }}
                     </div>
+
+                    <div class="uk-text-meta uk-margin-small-top" style="font-size: 0.85rem; color: #e67e22;">
+                        <span uk-icon="icon: user; ratio: 0.8" class="uk-margin-small-right"></span>
+                        Преподаватель:
+                        {% if item.instance.user_id %}
+                            {{ item.instance.user_id.last_name }} {{ item.instance.user_id.first_name }} (@{{ item.instance.user_id.username }})
+                        {% else %}
+                            <span class="uk-text-muted">Не указан</span>
+                        {% endif %}
+                    </div>
+
                     <p class="uk-text-muted uk-margin-small-top uk-margin-remove-bottom">{{ item.instance.description|default:"Описание отсутствует" }}</p>
 
-                    <div class="uk-margin-small-top">
+                    <div class="uk-margin-small-top uk-flex uk-flex-middle">
                         <button uk-toggle="target: #modal-students-{{ item.instance.id }}" class="uk-button uk-button-small uk-border-rounded uk-text-bold" style="background-color: #2ecc71; color: #ffffff; padding: 4px 12px; font-size: 0.75rem;">
                             <span uk-icon="icon: users; ratio: 0.8" class="uk-margin-small-right"></span> {{ item.students_count }} СТУДЕНТ(ОВ)
                         </button>
+
+                        {% if request.session.role == 'Преподаватель' %}
+                            <button uk-toggle="target: #modal-enroll-{{ item.instance.id }}" class="uk-button uk-button-default uk-button-small uk-border-rounded uk-text-bold uk-margin-small-left" style="padding: 4px 12px; font-size: 0.75rem; border: 1px solid #3498db; color: #3498db;">
+                                Изменить участников курса
+                            </button>
+                        {% endif %}
                     </div>
                 </div>
 
-                {% if request.session.role|lower == 'student' or request.session.role|lower == 'студент' %}
+                {% if request.session.role == 'Студент' %}
                     <div class="uk-width-1-1 uk-padding-remove-vertical uk-margin-small-top">
                         <div class="uk-flex uk-flex-between uk-text-muted uk-text-small uk-margin-small-bottom">
-                            <span>Прогресс обучения:</span>
+                            <span>Ваш прогресс обучения:</span>
                             <strong class="uk-text-primary">{{ item.progress }}%</strong>
                         </div>
                         <progress class="uk-progress uk-margin-remove" value="{{ item.progress }}" max="100"></progress>
@@ -105,20 +134,53 @@
                 </div>
             </div>
         </div>
+
+        {% if request.session.role == 'Преподаватель' %}
+            <div id="modal-enroll-{{ item.instance.id }}" uk-modal>
+                <div class="uk-modal-dialog uk-modal-body uk-border-rounded" style="max-width: 500px;">
+                    <button class="uk-modal-close-default" type="button" uk-close></button>
+                    <h2 class="uk-modal-title uk-h4 uk-text-bold">Зачислить на курс «{{ item.instance.course_title }}»</h2>
+                    <form action="{% url 'course_enroll_students' item.instance.id %}" method="POST">
+                        {% csrf_token %}
+                        <div class="uk-margin">
+                            <label class="uk-form-label uk-text-bold">Выберите студентов:</label>
+                            <div class="uk-panel uk-panel-scrollable uk-margin-small-top" style="height: 250px; border: 1px solid #e5e5e5; border-radius: 4px;">
+                                <ul class="uk-list uk-list-divider uk-margin-remove">
+                                    {% for student in students %}
+                                        <li>
+                                            <label>
+                                                <input class="uk-checkbox" type="checkbox" name="students" value="{{ student.id }}" {% if student in item.students_list %}checked{% endif %}>
+                                                {{ student.last_name }} {{ student.first_name }} <span class="uk-text-muted">(@{{ student.username }})</span>
+                                            </label>
+                                        </li>
+                                    {% empty %}
+                                        <li class="uk-text-muted uk-text-center uk-padding-small">Студенты не найдены</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="uk-margin-top uk-text-right">
+                            <button class="uk-button uk-button-default uk-modal-close" type="button">Отмена</button>
+                            <button class="uk-button uk-button-primary" type="submit">Сохранить изменения</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
     {% empty %}
         <div class="uk-width-1-1 uk-text-center uk-text-muted uk-margin-large-top">Курсы не найдены.</div>
     {% endfor %}
 </div>
 
 {% if courses.has_other_pages %}
-<ul class="uk-pagination uk-flex-center uk-margin-large-top" uk-margin>
-    {% if courses.has_previous %}<li><a href="?page={{ courses.previous_page_number }}&search={{ search_query }}&status={{ request.GET.status|default:'all' }}"><span uk-pagination-previous></span></a></li>{% endif %}
-    {% for num in courses.paginator.page_range %}<li class="{% if courses.number == num %}uk-active{% endif %}"><a href="?page={{ num }}&search={{ search_query }}&status={{ request.GET.status|default:'all' }}">{{ num }}</a></li>{% endfor %}
-    {% if courses.has_next %}<li><a href="?page={{ courses.next_page_number }}&search={{ search_query }}&status={{ request.GET.status|default:'all' }}"><span uk-pagination-next></span></a></li>{% endif %}
-</ul>
+    <ul class="uk-pagination uk-flex-center uk-margin-large-top" uk-margin>
+        {% if courses.has_previous %}<li><a href="?page={{ courses.previous_page_number }}&search={{ search_query }}&status={{ request.GET.status|default:'all' }}"><span uk-pagination-previous></span></a></li>{% endif %}
+        {% for num in courses.paginator.page_range %}<li class="{% if courses.number == num %}uk-active{% endif %}"><a href="?page={{ num }}&search={{ search_query }}&status={{ request.GET.status|default:'all' }}">{{ num }}</a></li>{% endfor %}
+        {% if courses.has_next %}<li><a href="?page={{ courses.next_page_number }}&search={{ search_query }}&status={{ request.GET.status|default:'all' }}"><span uk-pagination-next></span></a></li>{% endif %}
+    </ul>
 {% endif %}
 
-{% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
+{% if request.session.role == 'Преподаватель' %}
     <div id="modal-add-course" uk-modal>
         <div class="uk-modal-dialog uk-modal-body uk-border-rounded" style="max-width: 600px;">
             <button class="uk-modal-close-default" type="button" uk-close></button>
@@ -131,7 +193,6 @@
                     <div class="uk-width-1-2"><label class="uk-form-label">Дата начала</label><input class="uk-input" type="date" name="start_date" required></div>
                     <div class="uk-width-1-2"><label class="uk-form-label">Дата окончания</label><input class="uk-input" type="date" name="end_date" required></div>
                 </div>
-
                 <div class="uk-margin">
                     <label class="uk-form-label">Зачислить студентов:</label>
                     <div class="uk-margin-small-bottom">
@@ -140,13 +201,12 @@
                     </div>
                     <div class="uk-panel uk-panel-scrollable" style="height: 200px; border: 1px solid #e5e5e5; border-radius: 4px;">
                         <ul class="uk-list uk-list-divider uk-margin-remove">
-                            {% for student in students_enrolled %}
-                            <li><label><input class="uk-checkbox student-checkbox" type="checkbox" name="students" value="{{ student.id }}"> {{ student.last_name }} {{ student.first_name }}</label></li>
+                            {% for student in students %}
+                                <li><label><input class="uk-checkbox student-checkbox" type="checkbox" name="students" value="{{ student.id }}"> {{ student.last_name }} {{ student.first_name }}</label></li>
                             {% endfor %}
                         </ul>
                     </div>
                 </div>
-
                 <div class="uk-margin-top uk-text-right">
                     <button class="uk-button uk-button-default uk-modal-close" type="button">Отмена</button>
                     <button class="uk-button uk-button-primary" type="submit">Создать курс</button>

@@ -16,8 +16,9 @@ urlpatterns = [
     path('teachers/', views.teacher_list_view, name='teacher_list'),
     path('profile/', views.profile_view, name='profile'),
     path('profile/', views.profile_view, name='profile'),
-
-
+    path('courses/<int:pk>/delete/', views.course_delete_view, name='course_delete'),
+    path('courses/<int:pk>/enroll/', views.course_enroll_students_view, name='course_enroll_students'),
+    path('courses/<int:course_id>/exercise/<int:exercise_id>/delete-answer/', views.delete_answer_view, name='delete_answer'),
     path('profile/<int:user_id>/', views.profile_view, name='profile_detail'),
     path('course/<int:pk>/', views.course_detail_view, name='course_detail'),
     path('reports/add/', views.report_add_view, name='report_add'),

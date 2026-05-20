@@ -12,14 +12,12 @@
                     <input class="uk-search-input uk-input" type="search" name="search" value="{{ search_query }}" placeholder="Поиск по тексту отчета или имени студента...">
                 </div>
             </div>
-
             <div class="uk-width-medium@s">
                 <div class="uk-inline uk-width-1-1">
                     <span class="uk-form-icon" uk-icon="icon: calendar"></span>
                     <input class="uk-input" type="date" name="date_search" value="{{ date_query }}" title="Дата создания отчета">
                 </div>
             </div>
-
             <div class="uk-width-auto">
                 <button type="submit" class="uk-button uk-button-primary">Найти</button>
                 {% if search_query or date_query %}
@@ -29,7 +27,7 @@
         </form>
     </div>
 
-    {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
+    {% if request.session.role == 'Преподаватель' %}
         <div class="uk-width-auto@m uk-flex uk-flex-middle">
             <button class="uk-button uk-button-primary" uk-toggle="target: #modal-add-report">
                 <span uk-icon="icon: plus; ratio: 0.9" class="uk-margin-small-right"></span>Создать отчет
@@ -46,7 +44,7 @@
                 <th>Студент</th>
                 <th>Курс</th>
                 <th>Содержание отчета</th>
-                {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
+                {% if request.session.role == 'Преподаватель' %}
                     <th class="uk-table-shrink">Действия</th>
                 {% endif %}
             </tr>
@@ -57,7 +55,6 @@
                     <td class="uk-text-muted uk-text-nowrap" style="font-size: 0.9rem;">
                         <span uk-icon="icon: clock; ratio: 0.8" class="uk-margin-small-right"></span>{{ report.date }}
                     </td>
-
                     <td>
                         <div class="uk-flex uk-flex-middle">
                             <div class="uk-cover-container uk-border-circle uk-margin-small-right" style="width: 35px; height: 35px; background: #e5e5e5; flex-shrink: 0; position: relative; overflow: hidden;">
@@ -79,20 +76,17 @@
                             </div>
                         </div>
                     </td>
-
                     <td>
                         <span class="uk-badge uk-padding-small uk-padding-remove-vertical" style="background: #f0f2f5; color: #000000 !important; border: 1px solid #dcdcdc; border-radius: 4px; font-weight: 500;">
                             {{ report.course_title }}
                         </span>
                     </td>
-
                     <td class="uk-width-large">
                         <div style="color: #222222; font-size: 0.95rem; font-weight: 500; line-height: 1.5; border-left: 3px solid #1e87f0; padding-left: 12px;">
                             {{ report.text }}
                         </div>
                     </td>
-
-                    {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
+                    {% if request.session.role == 'Преподаватель' %}
                         <td class="uk-text-center">
                             <a href="{% url 'report_delete' report.id %}"
                                class="uk-icon-button uk-text-danger"
@@ -106,7 +100,7 @@
                 </tr>
             {% empty %}
                 <tr>
-                    <td colspan="{% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}5{% else %}4{% endif %}" class="uk-text-center uk-text-muted uk-padding">
+                    <td colspan="{% if request.session.role == 'Преподаватель' %}5{% else %}4{% endif %}" class="uk-text-center uk-text-muted uk-padding">
                         Отчеты не найдены.
                     </td>
                 </tr>
@@ -115,15 +109,13 @@
     </table>
 </div>
 
-{% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
+{% if request.session.role == 'Преподаватель' %}
     <div id="modal-add-report" uk-modal>
         <div class="uk-modal-dialog uk-modal-body">
             <button class="uk-modal-close-default" type="button" uk-close></button>
             <h2 class="uk-modal-title uk-h3">Создать новый отчет</h2>
-
             <form method="POST" action="{% url 'report_add' %}">
                 {% csrf_token %}
-
                 <div class="uk-margin">
                     <label class="uk-form-label">Выберите студента <span class="uk-text-danger">*</span></label>
                     <select name="student_id" class="uk-select" required>
@@ -133,7 +125,6 @@
                         {% endfor %}
                     </select>
                 </div>
-
                 <div class="uk-margin">
                     <label class="uk-form-label">Курс <span class="uk-text-danger">*</span></label>
                     <select name="course_id" class="uk-select" required>
@@ -143,14 +134,11 @@
                         {% endfor %}
                     </select>
                 </div>
-
                 <div class="uk-margin">
                     <label class="uk-form-label">Содержание отчета (характеристика успеваемости) <span class="uk-text-danger">*</span></label>
                     <textarea class="uk-textarea" name="report_text" rows="5" required placeholder="Например: Успешно выполнил все практические задания..."></textarea>
                 </div>
-
                 <hr class="uk-margin-medium">
-
                 <p class="uk-text-right uk-margin-remove">
                     <button class="uk-button uk-button-default uk-modal-close" type="button">Отмена</button>
                     <button class="uk-button uk-button-primary" type="submit">Сохранить отчет</button>
