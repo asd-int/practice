@@ -63,6 +63,10 @@
                         <span class="uk-text-small uk-text-muted">{{ teacher.courses }}</span>
                     </td>
                 </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="5" class="uk-text-center uk-text-muted uk-padding">Преподаватели не найдены.</td>
+                </tr>
             {% endfor %}
         </tbody>
     </table>

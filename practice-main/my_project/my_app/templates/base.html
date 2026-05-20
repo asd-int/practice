@@ -9,19 +9,57 @@
         body {
             background-color: #f8f9fa;
         }
+
         .sidebar {
             min-height: 100vh;
             background: #ffffff;
             border-right: 1px solid #e5e5e5;
+            box-sizing: border-box;
         }
+
+        .sidebar-brand {
+            font-size: 1.5rem;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #f0f2f5;
+            padding-bottom: 20px;
+        }
+
+        .custom-nav > li > a {
+            font-size: 1.1rem !important;
+            font-weight: 500 !important;
+            color: #666666 !important;
+            padding: 12px 18px !important;
+            border-radius: 6px;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .custom-nav > li > a:hover {
+            background-color: #f0f4f8 !important;
+            color: #1e87f0 !important;
+        }
+
+        .custom-nav > li.uk-active > a {
+            background-color: #1e87f0 !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
+            box-shadow: 0 4px 10px rgba(30, 135, 240, 0.25);
+        }
+
+        .custom-nav span[uk-icon] {
+            transform: scale(1.15);
+            margin-right: 12px !important;
+        }
+
         .main-content {
             min-height: 100vh;
         }
+
         .navbar-top {
             background: #ffffff;
             border-bottom: 1px solid #e5e5e5;
             padding: 15px 30px;
         }
+
         .user-avatar {
             width: 35px;
             height: 35px;
@@ -30,9 +68,11 @@
             position: relative;
             overflow: hidden;
         }
+
         .profile-link {
             text-decoration: none !important;
         }
+
         .profile-link:hover .uk-text-bold {
             color: #1e87f0;
         }
@@ -41,24 +81,27 @@
 <body>
 
     <div class="uk-grid-collapse" uk-grid>
-        <div class="uk-width-1-5@m sidebar uk-padding">
-            <div class="uk-text-bold uk-text-lead uk-margin-medium-bottom">Название</div>
+        <div class="uk-width-1-5@m sidebar uk-padding uk-background-default">
+            <div class="sidebar-brand uk-text-bold uk-text-primary uk-margin-medium-bottom uk-flex uk-flex-middle">
+                <span uk-icon="icon: laptop; ratio: 1.2" class="uk-margin-small-right"></span>
+                LMS Панель
+            </div>
 
-            <ul class="uk-nav uk-nav-default uk-nav-parent-icon" uk-nav>
+            <ul class="uk-nav uk-nav-default custom-nav" uk-nav>
                 <li class="{% if request.resolver_match.url_name == 'dashboard' %}uk-active{% endif %}">
-                    <a href="{% url 'dashboard' %}"><span uk-icon="icon: grid; ratio: 0.9" class="uk-margin-small-right"></span> Дашборд</a>
+                    <a href="{% url 'dashboard' %}"><span uk-icon="icon: grid"></span>Дашборд</a>
                 </li>
                 <li class="{% if request.resolver_match.url_name == 'course_list' or request.resolver_match.url_name == 'course_detail' %}uk-active{% endif %}">
-                    <a href="{% url 'course_list' %}"><span uk-icon="icon: album; ratio: 0.9" class="uk-margin-small-right"></span> Курсы</a>
+                    <a href="{% url 'course_list' %}"><span uk-icon="icon: album"></span>Курсы</a>
                 </li>
                 <li class="{% if request.resolver_match.url_name == 'student_list' or request.resolver_match.url_name == 'student_detail' %}uk-active{% endif %}">
-                    <a href="{% url 'student_list' %}"><span uk-icon="icon: users; ratio: 0.9" class="uk-margin-small-right"></span> Студенты</a>
+                    <a href="{% url 'student_list' %}"><span uk-icon="icon: users"></span>Студенты</a>
                 </li>
                 <li class="{% if request.resolver_match.url_name == 'teacher_list' %}uk-active{% endif %}">
-                    <a href="{% url 'teacher_list' %}"><span uk-icon="icon: user; ratio: 0.9" class="uk-margin-small-right"></span> Преподаватели</a>
+                    <a href="{% url 'teacher_list' %}"><span uk-icon="icon: user"></span>Преподаватели</a>
                 </li>
                 <li class="{% if request.resolver_match.url_name == 'report_list' %}uk-active{% endif %}">
-                    <a href="{% url 'report_list' %}"><span uk-icon="icon: copy; ratio: 0.9" class="uk-margin-small-right"></span> Отчеты</a>
+                    <a href="{% url 'report_list' %}"><span uk-icon="icon: copy"></span>Отчеты</a>
                 </li>
             </ul>
         </div>
@@ -75,12 +118,7 @@
                             <div class="uk-margin-medium-right uk-text-right">
                                 <div class="uk-text-bold uk-text-sm">{{ request.session.username }}</div>
                                 <div class="uk-text-muted uk-text-meta">
-                                    Роль:
-                                    {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
-                                        Преподаватель
-                                    {% else %}
-                                        Студент
-                                    {% endif %}
+                                    Роль: {{ request.session.role }}
                                 </div>
                             </div>
                             <div class="uk-border-circle user-avatar uk-margin-medium-right">
@@ -94,9 +132,6 @@
                         <a href="{% url 'logout' %}" class="uk-button uk-button-text uk-text-danger">Выйти</a>
                     {% else %}
                         <a href="{% url 'login' %}" class="uk-button uk-button-text uk-text-primary uk-margin-medium-right">Войти</a>
-                        <div class="uk-border-circle user-avatar">
-                            <span uk-icon="icon: user; ratio: 1" class="uk-text-muted uk-position-center"></span>
-                        </div>
                     {% endif %}
                 </div>
             </div>

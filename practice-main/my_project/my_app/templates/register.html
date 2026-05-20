@@ -12,23 +12,42 @@
         <p class="uk-text-muted uk-text-small uk-text-center uk-margin-small-top">Создайте аккаунт в системе</p>
 
         {% if error %}
-            <div class="uk-alert-danger uk-text-small uk-padding-small" uk-alert>{{ error }}</div>
+            <div class="uk-alert-danger uk-text-small uk-padding-small" uk-alert>
+                <p>{{ error }}</p>
+            </div>
         {% endif %}
 
         <form method="POST" action="{% url 'register' %}" class="uk-margin-medium-top">
             {% csrf_token %}
+
             <div class="uk-margin-small">
-                <input class="uk-input" type="text" name="first_name" placeholder="Имя" required>
+                <div class="uk-inline uk-width-1-1">
+                    <span class="uk-form-icon" uk-icon="icon: user"></span>
+                    <input class="uk-input" type="text" name="first_name" placeholder="Имя" required>
+                </div>
             </div>
+
             <div class="uk-margin-small">
-                <input class="uk-input" type="text" name="last_name" placeholder="Фамилия" required>
+                <div class="uk-inline uk-width-1-1">
+                    <span class="uk-form-icon" uk-icon="icon: users"></span>
+                    <input class="uk-input" type="text" name="last_name" placeholder="Фамилия" required>
+                </div>
             </div>
+
             <div class="uk-margin-small">
-                <input class="uk-input" type="text" name="username" placeholder="Логин" required>
+                <div class="uk-inline uk-width-1-1">
+                    <span class="uk-form-icon" uk-icon="icon: sign-in"></span>
+                    <input class="uk-input" type="text" name="username" placeholder="Логин" required>
+                </div>
             </div>
+
             <div class="uk-margin-small">
-                <input class="uk-input" type="password" name="password" placeholder="Пароль" required>
+                <div class="uk-inline uk-width-1-1">
+                    <span class="uk-form-icon" uk-icon="icon: lock"></span>
+                    <input class="uk-input" type="password" name="password" placeholder="Пароль" required>
+                </div>
             </div>
+
             <div class="uk-margin-small">
                 <label class="uk-form-label uk-text-muted uk-text-small">Выберите вашу роль:</label>
                 <select class="uk-select uk-margin-small-top" name="role">
@@ -36,15 +55,18 @@
                     <option value="Teacher">Преподаватель</option>
                 </select>
             </div>
+
             <div class="uk-margin-medium-top">
                 <button class="uk-button uk-button-primary uk-width-1-1" type="submit">Зарегистрироваться</button>
             </div>
         </form>
+
         <p class="uk-text-small uk-text-center uk-margin-medium-top">
-            Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a>
+            Уже есть аккаунт? <a href="{% url 'login' %}" class="uk-text-primary">Войти</a>
         </p>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.6/dist/js/uikit.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/uikit@3.21.6/dist/js/uikit-icons.min.js"></script>
 </body>
 </html>

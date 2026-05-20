@@ -25,29 +25,17 @@
 
     <div class="uk-width-auto@m uk-flex uk-flex-middle">
         {% with current_sort=sort_filter|default:"none" %}
-        <button class="uk-button uk-button-default" type="button">
-            {% if current_sort == 'high' %}
-                Успеваемость: по убыванию
-            {% elif current_sort == 'low' %}
-                Успеваемость: по возрастанию
-            {% else %}
-                Без сортировки
-            {% endif %}
-            <span uk-icon="icon: chevron-down" class="uk-margin-small-left"></span>
-        </button>
-        <div uk-dropdown="mode: click">
-            <ul class="uk-nav uk-dropdown-nav">
-                <li class="{% if current_sort == 'none' %}uk-active{% endif %}">
-                    <a href="?search={{ search_query }}&sort=none">Без сортировки</a>
-                </li>
-                <li class="{% if current_sort == 'high' %}uk-active{% endif %}">
-                    <a href="?search={{ search_query }}&sort=high">По успеваемости (по возрастанию)</a>
-                </li>
-                <li class="{% if current_sort == 'low' %}uk-active{% endif %}">
-                    <a href="?search={{ search_query }}&sort=low">По успеваемости (по убыванию)</a>
-                </li>
-            </ul>
-        </div>
+            <button class="uk-button uk-button-default" type="button">
+                {% if current_sort == 'high' %}Успеваемость: по возрастанию{% elif current_sort == 'low' %}Успеваемость: по убыванию{% else %}Без сортировки{% endif %}
+                <span uk-icon="icon: chevron-down" class="uk-margin-small-left"></span>
+            </button>
+            <div uk-dropdown="mode: click">
+                <ul class="uk-nav uk-dropdown-nav">
+                    <li class="{% if current_sort == 'none' %}uk-active{% endif %}"><a href="?search={{ search_query }}&sort=none">Без сортировки</a></li>
+                    <li class="{% if current_sort == 'high' %}uk-active{% endif %}"><a href="?search={{ search_query }}&sort=high">По успеваемости (по возрастанию)</a></li>
+                    <li class="{% if current_sort == 'low' %}uk-active{% endif %}"><a href="?search={{ search_query }}&sort=low">По успеваемости (по убыванию)</a></li>
+                </ul>
+            </div>
         {% endwith %}
     </div>
 </div>
@@ -64,47 +52,46 @@
         </thead>
         <tbody>
             {% for student in students %}
-            <tr>
-                <td class="uk-text-nowrap uk-text-bold">
-                    <div class="uk-flex uk-flex-middle">
-                        <div class="uk-cover-container uk-border-circle uk-margin-small-right" style="width: 35px; height: 35px; background: #e5e5e5; flex-shrink: 0; position: relative; overflow: hidden;">
-                            {% if student.avatar %}
-                                <img src="{{ student.avatar.url }}" alt="Avatar" uk-cover>
+                <tr>
+                    <td class="uk-text-nowrap uk-text-bold">
+                        <div class="uk-flex uk-flex-middle">
+                            <div class="uk-cover-container uk-border-circle uk-margin-small-right" style="width: 35px; height: 35px; background: #e5e5e5; flex-shrink: 0; position: relative; overflow: hidden;">
+                                {% if student.avatar %}
+                                    <img src="{{ student.avatar.url }}" alt="Avatar" uk-cover>
+                                {% else %}
+                                    <span uk-icon="icon: user; ratio: 0.9" class="uk-text-muted uk-position-center"></span>
+                                {% endif %}
+                            </div>
+                            <a href="{% url 'profile_detail' student.student_id %}" class="uk-link-reset uk-text-primary">
+                                {{ student.full_name }}
+                            </a>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="uk-flex uk-flex-wrap" style="gap: 4px;">
+                            {% if student.courses_badge_list %}
+                                {% for course in student.courses_badge_list %}
+                                    <span class="uk-badge" style="background: #f0f2f5; color: #000000 !important; border: 1px solid #dcdcdc; border-radius: 4px; font-weight: 500; padding: 2px 8px; white-space: nowrap;">
+                                        {{ course }}
+                                    </span>
+                                {% endfor %}
                             {% else %}
-                                <span uk-icon="icon: user; ratio: 0.9" class="uk-text-muted uk-position-center"></span>
+                                <span class="uk-text-muted" style="font-size: 0.9rem;">{{ student.course_title }}</span>
                             {% endif %}
                         </div>
-
-                        <a href="{% url 'profile_detail' student.student_id %}" class="uk-link-reset uk-text-primary">
-                            {{ student.full_name }}
-                        </a>
-                    </div>
-                </td>
-                <td>
-                    <div class="uk-flex uk-flex-wrap" style="gap: 4px;">
-                        {% if student.courses_badge_list %}
-                            {% for course in student.courses_badge_list %}
-                                <span class="uk-badge" style="background: #f0f2f5; color: #000000 !important; border: 1px solid #dcdcdc; border-radius: 4px; font-weight: 500; padding: 2px 8px; white-space: nowrap;">
-                                    {{ course }}
-                                </span>
-                            {% endfor %}
-                        {% else %}
-                            <span class="uk-text-muted" style="font-size: 0.9rem;">{{ student.course_title }}</span>
-                        {% endif %}
-                    </div>
-                </td>
-                <td class="uk-text-muted">{{ student.email }}</td>
-                <td>
-                    <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-xmini-bottom">
-                        <span class="uk-text-bold" style="color: #222; font-size: 0.9rem;">{{ student.progress }}%</span>
-                    </div>
-                    <progress class="uk-progress uk-margin-remove" value="{{ student.progress }}" max="100" style="height: 6px;"></progress>
-                </td>
-            </tr>
+                    </td>
+                    <td class="uk-text-muted">{{ student.email }}</td>
+                    <td>
+                        <div class="uk-flex uk-flex-between uk-flex-middle uk-margin-small-bottom">
+                            <span class="uk-text-bold" style="color: #222; font-size: 0.9rem;">{{ student.progress }}%</span>
+                        </div>
+                        <progress class="uk-progress uk-margin-remove" value="{{ student.progress }}" max="100" style="height: 6px;"></progress>
+                    </td>
+                </tr>
             {% empty %}
-            <tr>
-                <td colspan="4" class="uk-text-center uk-text-muted uk-padding">Нет записей о студентах.</td>
-            </tr>
+                <tr>
+                    <td colspan="4" class="uk-text-center uk-text-muted uk-padding">Нет записей о студентах.</td>
+                </tr>
             {% endfor %}
         </tbody>
     </table>

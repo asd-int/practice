@@ -3,33 +3,139 @@
 {% block page_title %}Дашборд{% endblock %}
 
 {% block content %}
-<div class="uk-grid-match uk-child-width-1-4@m uk-grid-small" uk-grid>
+<div class="uk-grid-match uk-child-width-1-4@m uk-grid-small uk-margin-medium-bottom" uk-grid>
     <div>
         <div class="uk-card uk-card-default uk-card-body uk-text-center uk-card-hover" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;">
-            <h3 class="uk-heading-medium uk-margin-remove-bottom">{{ courses_count }}</h3>
-            <p class="uk-text-muted uk-margin-small-top">Курсов</p>
+            <h3 class="uk-heading-medium uk-margin-remove-bottom uk-text-primary">{{ courses_count }}</h3>
+            <p class="uk-text-muted uk-margin-small-top"><span uk-icon="thumbnails"></span> Активные курсы</p>
         </div>
     </div>
 
     <div>
         <div class="uk-card uk-card-default uk-card-body uk-text-center uk-card-hover" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;">
-            <h3 class="uk-heading-medium uk-margin-remove-bottom">{{ students_count }}</h3>
-            <p class="uk-text-muted uk-margin-small-top">Студентов</p>
+            <h3 class="uk-heading-medium uk-margin-remove-bottom uk-text-success">{{ students_count }}</h3>
+            <p class="uk-text-muted uk-margin-small-top"><span uk-icon="users"></span> Студентов</p>
         </div>
     </div>
 
     <div>
         <div class="uk-card uk-card-default uk-card-body uk-text-center uk-card-hover" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;">
-            <h3 class="uk-heading-medium uk-margin-remove-bottom">{{ exercises_count }}</h3>
-            <p class="uk-text-muted uk-margin-small-top">Заданий</p>
+            <h3 class="uk-heading-medium uk-margin-remove-bottom uk-text-warning">{{ exercises_count }}</h3>
+            <p class="uk-text-muted uk-margin-small-top"><span uk-icon="file-text"></span> Всего заданий</p>
         </div>
     </div>
 
     <div>
         <div class="uk-card uk-card-default uk-card-body uk-text-center uk-card-hover" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;">
-            <h3 class="uk-heading-medium uk-margin-remove-bottom">{{ avg_progress }}%</h3>
-            <p class="uk-text-muted uk-margin-small-top">Успеваемость</p>
+            <h3 class="uk-heading-medium uk-margin-remove-bottom uk-text-danger">{{ avg_progress }}%</h3>
+            <p class="uk-text-muted uk-margin-small-top"><span uk-icon="trending-up"></span> Общий прогресс</p>
         </div>
+    </div>
+</div>
+
+<div class="uk-grid-medium" uk-grid>
+    <div class="uk-width-2-3@m">
+        <div class="uk-card uk-card-default uk-padding-small" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;">
+            <div class="uk-card-header uk-padding-remove-horizontal uk-padding-remove-top">
+                <h3 class="uk-card-title uk-h4 uk-text-bold"><span uk-icon="bookmark"></span> Мои текущие курсы</h3>
+            </div>
+            <div class="uk-card-body uk-padding-remove-horizontal uk-padding-remove-bottom">
+                <div class="uk-overflow-auto">
+                    <table class="uk-table uk-table-divider uk-table-middle uk-table-hover">
+                        <thead>
+                            <tr>
+                                <th>Название курса</th>
+                                <th>Период обучения</th>
+                                {% if request.session.role == 'Студент' %}
+                                    <th class="uk-width-medium">Прогресс</th>
+                                {% else %}
+                                    <th>Студентов</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for course_item in dashboard_courses %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'course_detail' course_item.instance.id %}" class="uk-link-text uk-text-bold uk-text-primary">
+                                            {{ course_item.instance.course_title }}
+                                        </a>
+                                    </td>
+                                    <td class="uk-text-meta">{{ course_item.instance.start_date|date:"d.m.Y" }} — {{ course_item.instance.end_date|date:"d.m.Y" }}</td>
+                                    {% if request.session.role == 'Студент' %}
+                                        <td>
+                                            <div class="uk-flex uk-flex-middle">
+                                                <progress class="uk-progress uk-margin-remove-vertical uk-margin-small-right" value="{{ course_item.progress }}" max="100" style="height: 8px;"></progress>
+                                                <span class="uk-text-bold uk-text-small">{{ course_item.progress }}%</span>
+                                            </div>
+                                        </td>
+                                    {% else %}
+                                        <td><span class="uk-badge">{{ course_item.students_count }}</span></td>
+                                    {% endif %}
+                                </tr>
+                            {% empty %}
+                                <tr>
+                                    <td colspan="3" class="uk-text-center uk-text-muted">Вы пока не зачислены ни на один активный курс.</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="uk-width-1-3@m">
+        {% if request.session.role == 'Преподаватель' %}
+            <div class="uk-card uk-card-default uk-padding-small" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;">
+                <div class="uk-card-header uk-padding-remove-horizontal uk-padding-remove-top">
+                    <h3 class="uk-card-title uk-h4 uk-text-bold"><span uk-icon="receiver"></span> Новые ответы студентов</h3>
+                </div>
+                <div class="uk-card-body uk-padding-remove-horizontal uk-padding-remove-bottom">
+                    <ul class="uk-list uk-list-divider">
+                        {% for ans in recent_answers %}
+                            <li class="uk-margin-small-bottom">
+                                <div class="uk-flex uk-flex-between uk-flex-middle">
+                                    <span class="uk-text-bold uk-text-small">{{ ans.user_id.last_name }} {{ ans.user_id.first_name }}</span>
+                                    <span class="uk-text-meta" style="font-size: 0.75rem;">{{ ans.created_at|date:"d.m H:i" }}</span>
+                                </div>
+                                <div class="uk-text-meta uk-margin-small-top">
+                                    Курс: <span class="uk-text-emphasis">{{ ans.exercise_id.course_id.course_title }}</span><br>
+                                    Задание: <a href="{% url 'course_detail' ans.exercise_id.course_id.id %}" class="uk-text-primary">{{ ans.exercise_id.exercise_title }}</a>
+                                </div>
+                            </li>
+                        {% empty %}
+                            <li class="uk-text-muted uk-text-center uk-padding-small">Новых ответов на проверку пока нет.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if request.session.role == 'Студент' %}
+            <div class="uk-card uk-card-default uk-padding-small" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;">
+                <div class="uk-card-header uk-padding-remove-horizontal uk-padding-remove-top">
+                    <h3 class="uk-card-title uk-h4 uk-text-bold"><span uk-icon="clock"></span> Предстоящие дедлайны</h3>
+                </div>
+                <div class="uk-card-body uk-padding-remove-horizontal uk-padding-remove-bottom">
+                    <ul class="uk-list uk-list-striped" style="border-radius: 4px; overflow: hidden;">
+                        {% for exe in upcoming_deadlines %}
+                            <li class="uk-padding-small">
+                                <div class="uk-flex uk-flex-between uk-flex-top">
+                                    <div class="uk-width-expand">
+                                        <span class="uk-text-bold uk-text-small" style="line-height: 1.2; display: block;">{{ exe.exercise_title }}</span>
+                                        <small class="uk-text-muted">{{ exe.course_id.course_title }}</small>
+                                    </div>
+                                    <span class="uk-label uk-label-danger uk-text-nowrap" style="font-size: 0.7rem; padding: 2px 6px;">{{ exe.due_date|date:"d.m.Y" }}</span>
+                                </div>
+                            </li>
+                        {% empty %}
+                            <li class="uk-text-muted uk-text-center uk-padding-small">Отлично! Все текущие задания успешно сданы.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
