@@ -56,8 +56,6 @@ ROOT_URLCONF = 'my_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        # ДОБАВЛЕНО: Теперь Django будет искать шаблоны не только внутри папок приложений,
-        # но и в корневой папке templates проекта, если ты её используешь
         'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
@@ -66,6 +64,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'my_app.context_processors.user_avatar_processor',  # <--- ДОБАВЛЕНО СЮДА
             ],
         },
     },

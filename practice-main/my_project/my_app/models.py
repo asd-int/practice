@@ -20,7 +20,8 @@ class Users(models.Model):
     first_name = models.CharField(max_length = 100, null = False)
     last_name = models.CharField(max_length = 100, null = False)
     role_perm_id = models.ForeignKey(Role_Permission, on_delete = models.CASCADE)
-    avatar = models.FileField(upload_to = 'avatars/', null = False)
+    avatar = models.FileField(upload_to = 'avatars/', null=True, blank=True)
+    bio = models.CharField(max_length = 300, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add = True)
 
 class Course(models.Model):
@@ -59,18 +60,6 @@ class UserContentStatus(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE, null=True, blank=True)
 
     is_completed = models.BooleanField(default=False)
-
-class Marks (models.Model):
-    exercise_id = models.ForeignKey(Exercise,null = True, on_delete = models.CASCADE)
-    quiz_id = models.ForeignKey(Quiz,null = True, on_delete = models.CASCADE)
-    lecture_id = models.ForeignKey(Lecture,null = True, on_delete = models.CASCADE)
-    mark = models.CharField(max_length = 100, null = False)
-
-class Gradebook(models.Model):
-    user_id = models.ForeignKey(Users, on_delete = models.CASCADE)
-    course_id = models.ForeignKey(Course, on_delete = models.CASCADE)
-    mark_id = models.ForeignKey(Marks, on_delete = models.CASCADE)
-    graded_at = models.DateField(null = False)
 
 class Report(models.Model):
     user_id = models.ForeignKey(Users, on_delete = models.CASCADE)

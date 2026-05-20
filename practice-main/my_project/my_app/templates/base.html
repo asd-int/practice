@@ -6,10 +6,36 @@
     <title>{% block title %}LMS Панель{% endblock %}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/uikit@3.21.6/dist/css/uikit.min.css" />
     <style>
-        body { background-color: #f8f9fa; }
-        .sidebar { min-height: 100vh; background: #ffffff; border-right: 1px solid #e5e5e5; }
-        .main-content { min-height: 100vh; }
-        .navbar-top { background: #ffffff; border-bottom: 1px solid #e5e5e5; padding: 15px 30px; }
+        body {
+            background-color: #f8f9fa;
+        }
+        .sidebar {
+            min-height: 100vh;
+            background: #ffffff;
+            border-right: 1px solid #e5e5e5;
+        }
+        .main-content {
+            min-height: 100vh;
+        }
+        .navbar-top {
+            background: #ffffff;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 15px 30px;
+        }
+        .user-avatar {
+            width: 35px;
+            height: 35px;
+            background: #e5e5e5;
+            display: inline-block;
+            position: relative;
+            overflow: hidden;
+        }
+        .profile-link {
+            text-decoration: none !important;
+        }
+        .profile-link:hover .uk-text-bold {
+            color: #1e87f0;
+        }
     </style>
 </head>
 <body>
@@ -22,17 +48,17 @@
                 <li class="{% if request.resolver_match.url_name == 'dashboard' %}uk-active{% endif %}">
                     <a href="{% url 'dashboard' %}"><span uk-icon="icon: grid; ratio: 0.9" class="uk-margin-small-right"></span> Дашборд</a>
                 </li>
-                <li class="{% if request.resolver_match.url_name == 'course_list' %}uk-active{% endif %}">
+                <li class="{% if request.resolver_match.url_name == 'course_list' or request.resolver_match.url_name == 'course_detail' %}uk-active{% endif %}">
                     <a href="{% url 'course_list' %}"><span uk-icon="icon: album; ratio: 0.9" class="uk-margin-small-right"></span> Курсы</a>
                 </li>
-                <li class="{% if request.resolver_match.url_name == 'student_list' %}uk-active{% endif %}">
+                <li class="{% if request.resolver_match.url_name == 'student_list' or request.resolver_match.url_name == 'student_detail' %}uk-active{% endif %}">
                     <a href="{% url 'student_list' %}"><span uk-icon="icon: users; ratio: 0.9" class="uk-margin-small-right"></span> Студенты</a>
                 </li>
-                <li>
-                    <a href="#"><span uk-icon="icon: user; ratio: 0.9" class="uk-margin-small-right"></span> Преподаватели</a>
+                <li class="{% if request.resolver_match.url_name == 'teacher_list' %}uk-active{% endif %}">
+                    <a href="{% url 'teacher_list' %}"><span uk-icon="icon: user; ratio: 0.9" class="uk-margin-small-right"></span> Преподаватели</a>
                 </li>
-                <li>
-                    <a href="#"><span uk-icon="icon: copy; ratio: 0.9" class="uk-margin-small-right"></span> Отчеты</a>
+                <li class="{% if request.resolver_match.url_name == 'report_list' %}uk-active{% endif %}">
+                    <a href="{% url 'report_list' %}"><span uk-icon="icon: copy; ratio: 0.9" class="uk-margin-small-right"></span> Отчеты</a>
                 </li>
             </ul>
         </div>
@@ -45,19 +71,46 @@
 
                 <div class="uk-flex uk-flex-middle">
                     {% if request.session.user_id %}
-                        <div class="uk-margin-medium-right uk-text-right">
-                            <div class="uk-text-bold uk-text-sm">{{ request.session.username }}</div>
-                            <div class="uk-text-muted uk-text-meta">
-                                Роль: {% if request.session.role == 'Teacher' %}Преподаватель{% else %}Студент{% endif %}
+                        <a href="{% url 'profile' %}" class="uk-flex uk-flex-middle profile-link uk-link-reset">
+                            <div class="uk-margin-medium-right uk-text-right">
+                                <div class="uk-text-bold uk-text-sm">{{ request.session.username }}</div>
+                                <div class="uk-text-muted uk-text-meta">
+                                    Роль:
+                                    {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
+                                        Преподаватель
+                                    {% else %}
+                                        Студент
+                                    {% endif %}
+                                </div>
                             </div>
-                        </div>
-                        <a href="{% url 'logout' %}" class="uk-button uk-button-text uk-text-danger uk-margin-medium-right">Выйти</a>
+                            <div class="uk-border-circle user-avatar uk-margin-medium-right">
+                                {% if current_user_avatar %}
+                                    <img src="{{ current_user_avatar }}" alt="Avatar" uk-cover>
+                                {% else %}
+                                    <span uk-icon="icon: user; ratio: 1" class="uk-text-muted uk-position-center"></span>
+                                {% endif %}
+                            </div>
+                        </a>
+                        <a href="{% url 'logout' %}" class="uk-button uk-button-text uk-text-danger">Выйти</a>
                     {% else %}
                         <a href="{% url 'login' %}" class="uk-button uk-button-text uk-text-primary uk-margin-medium-right">Войти</a>
+                        <div class="uk-border-circle user-avatar">
+                            <span uk-icon="icon: user; ratio: 1" class="uk-text-muted uk-position-center"></span>
+                        </div>
                     {% endif %}
-                    <div class="uk-border-circle" style="width: 35px; height: 35px; background: #e5e5e5; display: inline-block;"></div>
                 </div>
             </div>
+
+            {% if messages %}
+                <div class="uk-padding-large uk-padding-remove-bottom">
+                    {% for message in messages %}
+                        <div class="uk-alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}" uk-alert>
+                            <a class="uk-alert-close" uk-close></a>
+                            <p>{{ message }}</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
 
             <div class="uk-padding-large">
                 {% block content %}{% endblock %}

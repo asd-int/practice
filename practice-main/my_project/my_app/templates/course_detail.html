@@ -33,7 +33,6 @@
                             <th class="uk-table-shrink">Статус</th>
                         {% endif %}
                         <th>Название</th>
-                        <th>Описание</th>
                         <th>Файл</th>
                         {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}<th>Действие</th>{% endif %}
                     </tr>
@@ -52,11 +51,16 @@
                         </td>
                         {% endif %}
                         <td class="uk-text-bold">{{ lecture.lecture_title }}</td>
-                        <td>{{ lecture.description|default:"-" }}</td>
-                        <td>{% if lecture.content %}<a href="{{ lecture.content.url }}" download>Скачать</a>{% else %}-{% endif %}</td>
+                        <td>{% if lecture.content %}<a href="{{ lecture.content.url }}" class="uk-button uk-button-text uk-text-primary" download><span uk-icon="download"></span> Скачать</a>{% else %}-{% endif %}</td>
                         {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
-                        <td><a href="{% url 'delete_content' course.id 'lecture' lecture.id %}" class="uk-text-danger" onclick="return confirm('Удалить?')">Удалить</a></td>
+                        <td>
+                            <a href="{% url 'delete_content' course.id 'lecture' lecture.id %}" class="uk-button uk-button-danger uk-button-small" onclick="return confirm('Удалить лекцию?')">Удалить</a>
+                        </td>
                         {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}5{% else %}4{% endif %}" class="uk-text-center uk-text-muted">Лекций пока нет.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -74,7 +78,10 @@
                         {% endif %}
                         <th>Название</th>
                         <th>Срок</th>
-                        <th>Файл</th>
+                        <th>Файл задания</th>
+                        {% if request.session.role|lower == 'student' or request.session.role|lower == 'студент' %}
+                            <th>Отправить ответ</th>
+                        {% endif %}
                         {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}<th>Действие</th>{% endif %}
                     </tr>
                 </thead>
@@ -83,20 +90,60 @@
                     <tr>
                         {% if request.session.role|lower == 'student' or request.session.role|lower == 'студент' %}
                         <td>
-                            <form method="POST" action="{% url 'toggle_status' course.id %}">
-                                {% csrf_token %}
-                                <input type="hidden" name="item_type" value="exercise">
-                                <input type="hidden" name="item_id" value="{{ exe.id }}">
-                                <input type="checkbox" class="uk-checkbox" onChange="this.form.submit()" {% if exe.id in completed_exercises %}checked{% endif %}>
-                            </form>
+                            <input type="checkbox" class="uk-checkbox" disabled {% if exe.id in completed_exercises %}checked{% endif %}>
                         </td>
                         {% endif %}
                         <td class="uk-text-bold">{{ exe.exercise_title }}</td>
                         <td class="uk-text-danger">{{ exe.due_date|date:"d.m.Y" }}</td>
-                        <td>{% if exe.content %}<a href="{{ exe.content.url }}" download>Скачать</a>{% else %}-{% endif %}</td>
-                        {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
-                        <td><a href="{% url 'delete_content' course.id 'exercise' exe.id %}" class="uk-text-danger" onclick="return confirm('Удалить?')">Удалить</a></td>
+                        <td>{% if exe.content %}<a href="{{ exe.content.url }}" class="uk-button uk-button-text uk-text-danger" download><span uk-icon="file-text"></span> Скачать</a>{% else %}-{% endif %}</td>
+
+                        {% if request.session.role|lower == 'student' or request.session.role|lower == 'студент' %}
+                        <td>
+                            <form method="POST" action="{% url 'submit_answer' course.id exe.id %}" enctype="multipart/form-data" class="uk-flex uk-flex-middle">
+                                {% csrf_token %}
+                                <div uk-form-custom="target: true">
+                                    <input type="file" name="answer_file" required>
+                                    <button class="uk-button uk-button-default uk-button-small" type="button" tabindex="-1">Файл</button>
+                                </div>
+                                <button class="uk-button uk-button-primary uk-button-small uk-margin-small-left" type="submit">Сдать</button>
+                            </form>
+                        </td>
                         {% endif %}
+
+                        {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
+                        <td>
+                            <a href="{% url 'delete_content' course.id 'exercise' exe.id %}" class="uk-button uk-button-danger uk-button-small" onclick="return confirm('Удалить задание?')">Удалить</a>
+                        </td>
+                        {% endif %}
+                    </tr>
+
+                    {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
+                    <tr>
+                        <td colspan="5" class="uk-background-muted uk-padding-remove-vertical">
+                            <div class="uk-padding-small">
+                                <span class="uk-text-bold uk-text-small">Присланные ответы студентов:</span>
+                                <ul class="uk-list uk-list-bullet uk-margin-remove-top">
+                                    {% for ans in submitted_answers %}
+                                        {% if ans.exercise_id.id == exe.id %}
+                                            <li>
+                                                <strong>{{ ans.user_id.last_name }} {{ ans.user_id.first_name }}</strong>
+                                                (<span class="uk-text-muted">{{ ans.created_at|date:"d.m H:i" }}</span>):
+                                                <a href="{{ ans.answer_content.url }}" download class="uk-link-heading uk-text-primary"><span uk-icon="download"></span> Скачать ответ</a>
+                                                {% if ans.answer_text %}<span class="uk-text-italic"> — "{{ ans.answer_text }}"</span>{% endif %}
+                                            </li>
+                                        {% endif %}
+                                    {% empty %}
+                                        <li class="uk-text-muted uk-text-meta">Ответов пока никто не прислал.</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endif %}
+
+                    {% empty %}
+                    <tr>
+                        <td colspan="{% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}5{% else %}5{% endif %}" class="uk-text-center uk-text-muted">Заданий пока нет.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -131,10 +178,16 @@
                         </td>
                         {% endif %}
                         <td class="uk-text-bold">{{ quiz.quiz_title }}</td>
-                        <td><a href="{{ quiz.link_quiz }}" target="_blank">Перейти</a></td>
+                        <td><a href="{{ quiz.link_quiz }}" target="_blank" class="uk-link-text uk-text-primary"><span uk-icon="link"></span> Перейти</a></td>
                         {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
-                        <td><a href="{% url 'delete_content' course.id 'quiz' quiz.id %}" class="uk-text-danger" onclick="return confirm('Удалить?')">Удалить</a></td>
+                        <td>
+                            <a href="{% url 'delete_content' course.id 'quiz' quiz.id %}" class="uk-button uk-button-danger uk-button-small" onclick="return confirm('Удалить тест?')">Удалить</a>
+                        </td>
                         {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="{% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}4{% else %}3{% endif %}" class="uk-text-center uk-text-muted">Тестов пока нет.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -148,24 +201,99 @@
     <div class="uk-modal-dialog uk-modal-body">
         <button class="uk-modal-close-default" type="button" uk-close></button>
         <h2 class="uk-modal-title uk-h3">Добавить материал</h2>
+
         <form method="POST" action="{% url 'add_content' course.id %}" enctype="multipart/form-data">
             {% csrf_token %}
+
             <div class="uk-margin">
-                <select class="uk-select" name="content_type" required>
+                <label class="uk-form-label">Тип материала <span class="uk-text-danger">*</span></label>
+                <select class="uk-select" name="content_type" id="content_type" required>
                     <option value="lecture">Лекция</option>
                     <option value="exercise">Задание</option>
                     <option value="quiz">Тест</option>
                 </select>
             </div>
-            <div class="uk-margin"><input class="uk-input" type="text" name="title" placeholder="Название" required></div>
-            <div class="uk-margin"><textarea class="uk-textarea" name="description" placeholder="Описание"></textarea></div>
-            <div class="uk-margin" uk-form-custom="target: true"><input type="file" name="content_file"><input class="uk-input" type="text" placeholder="Выберите файл..." disabled></div>
-            <div class="uk-margin"><input class="uk-input" type="date" name="due_date"></div>
-            <div class="uk-margin"><input class="uk-input" type="text" name="link_quiz" placeholder="URL теста"></div>
-            <button class="uk-button uk-button-primary" type="submit">Создать</button>
+
+            <div class="uk-margin">
+                <label class="uk-form-label">Название <span class="uk-text-danger">*</span></label>
+                <input class="uk-input" type="text" name="title" required placeholder="Введите название">
+            </div>
+
+            <div id="exercise-fields" class="uk-margin" style="display: none;">
+                <label class="uk-form-label">Описание <span class="uk-text-danger">*</span></label>
+                <textarea class="uk-textarea" name="description" id="exercise_description" rows="3" placeholder="Описание задания"></textarea>
+
+                <label class="uk-form-label uk-margin-small-top">Срок сдачи <span class="uk-text-danger">*</span></label>
+                <input class="uk-input" type="date" name="due_date" id="exercise_due_date">
+            </div>
+
+            <div id="quiz-fields" class="uk-margin" style="display: none;">
+                <label class="uk-form-label">Ссылка на тест <span class="uk-text-danger">*</span></label>
+                <input class="uk-input" type="url" name="link_quiz" id="quiz_link_input" placeholder="https://forms.example.com/quiz">
+            </div>
+
+            <div id="file-field" class="uk-margin">
+                <label class="uk-form-label">Файл <span class="uk-text-danger">*</span></label>
+                <input class="uk-input" type="file" name="content_file" id="content_file" required accept=".pdf,.ppt,.pptx">
+                <small class="uk-text-muted" id="file-hint">PDF, PPT, PPTX (презентация или документ)</small>
+            </div>
+
+            <p class="uk-text-right uk-margin-medium-top">
+                <button class="uk-button uk-button-default uk-modal-close" type="button">Отмена</button>
+                <button class="uk-button uk-button-primary" type="submit">Добавить материал</button>
+            </p>
         </form>
     </div>
 </div>
+
+<script>
+document.getElementById('content_type').addEventListener('change', function() {
+    const type = this.value;
+    const exerciseFields = document.getElementById('exercise-fields');
+    const quizFields = document.getElementById('quiz-fields');
+    const fileField = document.getElementById('file-field');
+
+    const fileInput = document.getElementById('content_file');
+    const fileHint = document.getElementById('file-hint');
+    const descriptionInput = document.getElementById('exercise_description');
+    const dueDateInput = document.getElementById('exercise_due_date');
+    const quizLinkInput = document.getElementById('quiz_link_input');
+
+    exerciseFields.style.display = 'none';
+    quizFields.style.display = 'none';
+    fileField.style.display = 'none';
+
+    fileInput.required = false;
+    descriptionInput.required = false;
+    dueDateInput.required = false;
+    quizLinkInput.required = false;
+
+    if (type === 'exercise') {
+        exerciseFields.style.display = 'block';
+        fileField.style.display = 'block';
+        fileInput.required = true;
+        descriptionInput.required = true;
+        dueDateInput.required = true;
+        fileInput.setAttribute('accept', '.pdf,.doc,.docx');
+        fileHint.textContent = 'PDF, DOC, DOCX (файл с описанием лабораторной/задачи)';
+    } else if (type === 'quiz') {
+        quizFields.style.display = 'block';
+        quizLinkInput.required = true;
+    } else {
+        fileField.style.display = 'block';
+        fileInput.required = true;
+        fileInput.setAttribute('accept', '.pdf,.ppt,.pptx');
+        fileHint.textContent = 'PDF, PPT, PPTX (лекционные слайды или книга)';
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    const dueDateInput = document.getElementById('exercise_due_date');
+    if (dueDateInput) {
+        dueDateInput.setAttribute('min', new Date().toISOString().split('T')[0]);
+    }
+});
+</script>
 {% endif %}
 
 {% endblock %}

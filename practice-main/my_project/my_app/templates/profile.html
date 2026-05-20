@@ -1,55 +1,115 @@
 {% extends 'base.html' %}
 
-{% block page_title %}
-<a href="{% url 'student_list' %}" class="uk-icon-link uk-margin-small-right" uk-icon="arrow-left"></a> Студент
-{% endblock %}
+{% block page_title %}Профиль: {{ profile_user.first_name }}{% endblock %}
 
 {% block content %}
-<div class="uk-card uk-card-default uk-card-body uk-margin-medium-bottom" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;">
+<div class="uk-margin-small-bottom">
+    <a href="{% url 'dashboard' %}" class="uk-button uk-button-text uk-text-muted"><span uk-icon="arrow-left"></span> Назад</a>
+</div>
+
+<div class="uk-card uk-card-default uk-card-body uk-margin-medium-bottom">
     <div uk-grid class="uk-flex-middle">
         <div class="uk-width-auto">
-            <div style="width: 100px; height: 100px; background: #f0f0f0; border: 1px solid #ccc; border-radius: 4px;" class="uk-flex uk-flex-center uk-flex-middle">
-                <span uk-icon="icon: user; ratio: 2.5" class="uk-text-muted"></span>
+            <div class="uk-cover-container uk-border-rounded" style="width: 150px; height: 150px; background: #f8f8f8;">
+                {% if profile_user.avatar %}<img src="{{ profile_user.avatar.url }}" uk-cover>
+                {% else %}<div class="uk-flex uk-flex-center uk-flex-middle uk-height-100"><span uk-icon="icon: user; ratio: 3.5" class="uk-text-muted"></span></div>
+                {% endif %}
             </div>
         </div>
         <div class="uk-width-expand">
-            <h2 class="uk-h3 uk-margin-remove-bottom">{{ student.get_full_name }}</h2>
-            <p class="uk-text-muted uk-margin-small-top">Студент платформы LMS. Зарегистрирован: {{ student.created_at|date:"d.m.Y" }}</p>
+            <h2 class="uk-margin-remove-bottom">{{ profile_user.last_name }} {{ profile_user.first_name }}</h2>
+            <p class="uk-text-meta"><span class="uk-label uk-label-warning">{{ role }}</span></p>
         </div>
     </div>
 </div>
 
-<ul class="uk-subnav uk-subnav-pill" uk-switcher="connect: #student-tabs">
+<ul class="uk-subnav uk-subnav-pill" uk-switcher="connect: #profile-tabs">
     <li><a href="#">Обзор</a></li>
-    <li><a href="#">Курсы</a></li>
-    <li><a href="#">Оценки</a></li>
-    <li><a href="#">Задания</a></li>
-    <li><a href="#">Активность</a></li>
+    <li><a href="#">{% if is_teacher %}Мои курсы{% else %}Курсы{% endif %}</a></li>
+    {% if not is_teacher %}<li><a href="#">Задания</a></li>{% endif %}
 </ul>
 
-<ul id="student-tabs" class="uk-switcher uk-margin">
+<ul id="profile-tabs" class="uk-switcher uk-margin">
     <li>
-        <div class="uk-card uk-card-default uk-card-body" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px; min-height: 200px;">
-            <h4 class="uk-card-title">О студенте</h4>
-            <p class="uk-text-muted">Здесь выводится подробный лог или текстовое описание, имитирующее штрихи на вашем макете. Можно вывести информацию о последних действиях или личные заметки куратора.</p>
-        </div>
-    </li>
-    
-    <li>
-        <div class="uk-card uk-card-default uk-card-body" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;">
-            <h4 class="uk-card-title">Текущие курсы</h4>
-            <ul class="uk-list uk-list-divider">
-                {% for enrollment in enrolled_courses %}
-                <li>{{ enrollment.course.course_title }} <span class="uk-text-muted uk-text-small">(с {{ enrollment.course.start_date }})</span></li>
-                {% empty %}
-                <li class="uk-text-muted">Студент еще не зачислен ни на один курс.</li>
-                {% endfor %}
-            </ul>
+        <div class="uk-card uk-card-default uk-card-body">
+            <h3>О пользователе</h3>
+            <p>{{ profile_user.bio|default:"Описание отсутствует." }}</p>
+            {% if request.session.user_id == profile_user.id %}
+                <button class="uk-button uk-button-default uk-button-small" uk-toggle="target: #modal-edit-profile">Редактировать</button>
+            {% endif %}
         </div>
     </li>
 
-    <li><div class="uk-card uk-card-default uk-card-body" style="border: 1px solid #e5e5e5; box-shadow: none;">Здесь будут оценки из модели Gradebook.</div></li>
-    <li><div class="uk-card uk-card-default uk-card-body" style="border: 1px solid #e5e5e5; box-shadow: none;">Список сданных Answer_Exercise.</div></li>
-    <li><div class="uk-card uk-card-default uk-card-body" style="border: 1px solid #e5e5e5; box-shadow: none;">Лог посещаемости.</div></li>
+    <li>
+        <div class="uk-card uk-card-default uk-padding-small">
+            <table class="uk-table uk-table-divider">
+                <thead><tr><th>Название</th>{% if not is_teacher %}<th>Дата</th><th>Статус</th>{% endif %}</tr></thead>
+                <tbody>
+                    {% if is_teacher %}
+                        {% for c in courses %}
+                        <tr><td><a href="{% url 'course_detail' c.id %}" class="uk-link-reset">{{ c.course_title }}</a></td></tr>
+                        {% empty %}<tr><td>Преподаватель еще не создал курсы.</td></tr>{% endfor %}
+                    {% else %}
+                        {% for e in enrolled_courses %}
+                        <tr>
+                            <td><a href="{% url 'course_detail' e.course_id.id %}" class="uk-link-reset">{{ e.course_id.course_title }}</a></td>
+                            <td>{{ e.enrolled_at|date:"d.m.Y" }}</td>
+                            <td><span class="uk-badge">{{ e.status }}</span></td>
+                        </tr>
+                        {% empty %}<tr><td colspan="3">Нет зачислений.</td></tr>{% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </li>
+
+    {% if not is_teacher %}
+    <li>
+        <div class="uk-card uk-card-default uk-padding-small">
+            <table class="uk-table uk-table-divider">
+                <thead><tr><th>Задание</th><th>Курс</th><th>Статус</th></tr></thead>
+                <tbody>
+                    {% for s in completed_exercises %}
+                    <tr>
+                        <td>{{ s.exercise.exercise_title }}</td>
+                        <td>{{ s.course_id.course_title }}</td>
+                        <td><span class="uk-text-success" uk-icon="check"></span></td>
+                    </tr>
+                    {% empty %}<tr><td colspan="3">Нет выполненных заданий.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </li>
+    {% endif %}
 </ul>
+
+<div id="modal-edit-profile" uk-modal>
+    <div class="uk-modal-dialog uk-modal-body uk-border-rounded">
+        <button class="uk-modal-close-default" type="button" uk-close></button>
+        <h2 class="uk-modal-title uk-h4 uk-text-bold">Редактирование профиля</h2>
+        <form method="POST" action="{% url 'profile' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="uk-margin">
+                <label class="uk-form-label">Имя</label>
+                <input class="uk-input" type="text" name="first_name" value="{{ profile_user.first_name }}">
+            </div>
+            <div class="uk-margin">
+                <label class="uk-form-label">Фамилия</label>
+                <input class="uk-input" type="text" name="last_name" value="{{ profile_user.last_name }}">
+            </div>
+            <div class="uk-margin">
+                <label class="uk-form-label">О себе</label>
+                <textarea class="uk-textarea" name="bio" rows="4">{{ profile_user.bio }}</textarea>
+            </div>
+            <div class="uk-margin">
+                <label class="uk-form-label">Аватар</label>
+                <input class="uk-input" type="file" name="avatar">
+            </div>
+            <div class="uk-margin-top uk-text-right">
+                <button class="uk-button uk-button-default uk-modal-close" type="button">Отмена</button>
+                <button class="uk-button uk-button-primary" type="submit">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

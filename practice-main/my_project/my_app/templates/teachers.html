@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Преподаватели{% endblock %}
+
+{% block content %}
+<div class="uk-margin-medium-bottom" uk-grid>
+    <div class="uk-width-1-1">
+        <form method="GET" class="uk-grid-small" uk-grid>
+            <div class="uk-width-expand">
+                <div class="uk-inline uk-width-1-1">
+                    <span class="uk-form-icon" uk-search-icon></span>
+                    <input class="uk-search-input uk-input" type="search" name="search" value="{{ search_query }}" placeholder="Поиск по имени или фамилии преподавателя...">
+                </div>
+            </div>
+            <div class="uk-width-auto">
+                <button type="submit" class="uk-button uk-button-primary">Найти</button>
+                {% if search_query %}
+                    <a href="?" class="uk-button uk-button-default" title="Сбросить фильтры">X</a>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="uk-card uk-card-default uk-padding-small" style="border-radius: 8px; box-shadow: none; border: 1px solid #e5e5e5;">
+    <table class="uk-table uk-table-divider uk-table-striped uk-table-middle">
+        <thead>
+            <tr>
+                <th class="uk-table-shrink">ID</th>
+                <th>ФИО Преподавателя</th>
+                <th>Логин</th>
+                <th>Email</th>
+                <th>Ведет курсы</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for teacher in teachers %}
+                <tr>
+                    <td class="uk-text-muted">{{ teacher.id }}</td>
+                    <td>
+                        <div class="uk-flex uk-flex-middle">
+                            <div class="uk-cover-container uk-border-circle uk-margin-small-right" style="width: 35px; height: 35px; background: #e5e5e5; flex-shrink: 0; position: relative; overflow: hidden;">
+                                {% if teacher.avatar %}
+                                    <img src="{{ teacher.avatar.url }}" alt="Avatar" uk-cover>
+                                {% else %}
+                                    <span uk-icon="icon: user; ratio: 0.9" class="uk-text-muted uk-position-center"></span>
+                                {% endif %}
+                            </div>
+                            <a href="{% url 'profile_detail' teacher.id %}" class="uk-link-reset uk-text-bold uk-text-primary">
+                                {{ teacher.full_name }}
+                            </a>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="uk-label uk-label-text" style="background: #f0f2f5; color: #666; border: 1px solid #e5e5e5; text-transform: none; padding: 2px 6px;">
+                            @{{ teacher.username }}
+                        </span>
+                    </td>
+                    <td>
+                        <a class="uk-link-muted" href="mailto:{{ teacher.email }}">{{ teacher.email }}</a>
+                    </td>
+                    <td>
+                        <span class="uk-text-small uk-text-muted">{{ teacher.courses }}</span>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -4,21 +4,39 @@
 
 {% block content %}
 <div class="uk-margin-medium-bottom" uk-grid>
-    <div class="uk-width-expand">
-        <form method="GET" class="uk-search uk-search-default uk-width-1-1">
-            <span uk-search-icon></span>
-            <input class="uk-search-input" type="search" name="search" value="{{ search_query }}" placeholder="Поиск курса...">
+    <div class="uk-width-expand@m">
+        <form method="GET" class="uk-grid-small" uk-grid>
+            <input type="hidden" name="status" value="{{ request.GET.status|default:'all' }}">
+
+            <div class="uk-width-expand">
+                <div class="uk-inline uk-width-1-1">
+                    <span class="uk-form-icon" uk-search-icon></span>
+                    <input class="uk-search-input uk-input" type="search" name="search" value="{{ search_query }}" placeholder="Поиск курса..." style="box-sizing: border-box;">
+                </div>
+            </div>
+            <div class="uk-width-auto">
+                <button type="submit" class="uk-button uk-button-primary">Найти</button>
+                {% if search_query %}
+                    <a href="?status={{ request.GET.status|default:'all' }}" class="uk-button uk-button-default" title="Сбросить фильтры">X</a>
+                {% endif %}
+            </div>
         </form>
     </div>
-    <div class="uk-width-auto">
-        <button class="uk-button uk-button-default" type="button">Все курсы <span uk-icon="icon: chevron-down"></span></button>
-        <div uk-dropdown="mode: click">
-            <ul class="uk-nav uk-dropdown-nav">
-                <li class="uk-active"><a href="#">Все курсы</a></li>
-                <li><a href="#">Активные</a></li>
-                <li><a href="#">Прошедшие</a></li>
-            </ul>
-        </div>
+
+    <div class="uk-width-auto@m uk-flex uk-flex-middle">
+        {% with current_status=request.GET.status|default:"all" %}
+            <button class="uk-button uk-button-default" type="button">
+                {% if current_status == 'active' %}Активные{% elif current_status == 'past' %}Прошедшие{% else %}Все курсы{% endif %}
+                <span uk-icon="icon: chevron-down"></span>
+            </button>
+            <div uk-dropdown="mode: click">
+                <ul class="uk-nav uk-dropdown-nav">
+                    <li class="{% if current_status == 'all' %}uk-active{% endif %}"><a href="?search={{ search_query }}&status=all">Все курсы</a></li>
+                    <li class="{% if current_status == 'active' %}uk-active{% endif %}"><a href="?search={{ search_query }}&status=active">Активные</a></li>
+                    <li class="{% if current_status == 'past' %}uk-active{% endif %}"><a href="?search={{ search_query }}&status=past">Прошедшие</a></li>
+                </ul>
+            </div>
+        {% endwith %}
 
         {% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
             <button class="uk-button uk-button-primary uk-margin-small-left" uk-toggle="target: #modal-add-course">Добавить</button>
@@ -28,80 +46,118 @@
 
 <div class="uk-grid-medium" uk-grid>
     {% for item in courses %}
-    <div class="uk-width-1-1">
-        <div class="uk-card uk-card-default uk-grid-collapse uk-margin uk-padding" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;" uk-grid>
+        <div class="uk-width-1-1">
+            <div class="uk-card uk-card-default uk-padding uk-flex-middle" style="border: 1px solid #e5e5e5; box-shadow: none; border-radius: 8px;" uk-grid>
+                <div class="uk-width-1-1 uk-padding-remove-vertical">
+                    <h3 class="uk-card-title uk-margin-remove-bottom">
+                        <a href="{% url 'course_detail' item.instance.id %}" class="uk-link-reset uk-text-primary uk-text-bold">
+                            {{ item.instance.course_title }}
+                        </a>
+                    </h3>
+                    <div class="uk-text-meta uk-margin-small-top" style="font-size: 0.85rem;">
+                        <span uk-icon="icon: calendar; ratio: 0.8" class="uk-margin-small-right"></span>
+                        Срок: {{ item.instance.start_date|date:"d.m.Y" }} — {{ item.instance.end_date|date:"d.m.Y" }}
+                    </div>
+                    <p class="uk-text-muted uk-margin-small-top uk-margin-remove-bottom">{{ item.instance.description|default:"Описание отсутствует" }}</p>
 
-            <div class="uk-width-auto@s uk-flex uk-flex-center uk-flex-middle bg-light" style="background: #fafafa; border: 1px dashed #ccc; height: 120px; width: 120px;">
-                <span uk-icon="icon: image; ratio: 2" class="uk-text-muted"></span>
+                    <div class="uk-margin-small-top">
+                        <button uk-toggle="target: #modal-students-{{ item.instance.id }}" class="uk-button uk-button-small uk-border-rounded uk-text-bold" style="background-color: #2ecc71; color: #ffffff; padding: 4px 12px; font-size: 0.75rem;">
+                            <span uk-icon="icon: users; ratio: 0.8" class="uk-margin-small-right"></span> {{ item.students_count }} СТУДЕНТ(ОВ)
+                        </button>
+                    </div>
+                </div>
+
+                {% if request.session.role|lower == 'student' or request.session.role|lower == 'студент' %}
+                    <div class="uk-width-1-1 uk-padding-remove-vertical uk-margin-small-top">
+                        <div class="uk-flex uk-flex-between uk-text-muted uk-text-small uk-margin-small-bottom">
+                            <span>Прогресс обучения:</span>
+                            <strong class="uk-text-primary">{{ item.progress }}%</strong>
+                        </div>
+                        <progress class="uk-progress uk-margin-remove" value="{{ item.progress }}" max="100"></progress>
+                    </div>
+                {% endif %}
             </div>
+        </div>
 
-            <div class="uk-width-expand@s uk-padding-small">
-                <h3 class="uk-card-title uk-margin-remove-bottom">
-                    <a href="{% url 'course_detail' item.instance.id %}" class="uk-link-reset uk-text-primary">
-                         {{ item.instance.course_title }}
-                    </a>
-                </h3>
-                <p class="uk-text-muted uk-margin-small-top uk-margin-remove-bottom">{{ item.instance.description|default:"Описание отсутствует" }}</p>
-                <div class="uk-margin-small-top">
-                    <span class="uk-label uk-label-success">{{ item.students_count }} Студентов</span>
+        <div id="modal-students-{{ item.instance.id }}" uk-modal>
+            <div class="uk-modal-dialog uk-modal-body uk-border-rounded">
+                <button class="uk-modal-close-default" type="button" uk-close></button>
+                <h2 class="uk-modal-title uk-h4 uk-text-bold">Студенты курса «{{ item.instance.course_title }}»</h2>
+                <div class="uk-overflow-auto uk-margin-medium-top">
+                    <table class="uk-table uk-table-divider uk-table-middle">
+                        <thead><tr><th class="uk-width-expand">ФИО Студента</th><th class="uk-width-small">Логин</th></tr></thead>
+                        <tbody>
+                            {% for student in item.students_list %}
+                                <tr>
+                                    <td>
+                                        <div class="uk-flex uk-flex-middle">
+                                            <div class="uk-cover-container uk-border-circle uk-margin-small-right" style="width: 32px; height: 32px; background: #e5e5e5; flex-shrink: 0; position: relative; overflow: hidden;">
+                                                {% if student.avatar %}<img src="{{ student.avatar.url }}" uk-cover>{% else %}<span uk-icon="icon: user; ratio: 0.85" class="uk-text-muted uk-position-center"></span>{% endif %}
+                                            </div>
+                                            <a href="{% url 'profile_detail' student.id %}" class="uk-link-reset uk-text-primary uk-text-bold uk-text-truncate">{{ student.last_name }} {{ student.first_name }}</a>
+                                        </div>
+                                    </td>
+                                    <td class="uk-text-muted uk-text-nowrap">@{{ student.username }}</td>
+                                </tr>
+                            {% empty %}<tr><td colspan="2" class="uk-text-center uk-text-muted">На этот курс пока никто не зачислен.</td></tr>{% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
-
-            {% if request.session.role|lower == 'student' or request.session.role|lower == 'студент' %}
-            <div class="uk-width-1-4@s uk-flex uk-flex-column uk-flex-center uk-padding-small">
-                <div class="uk-text-right uk-text-muted uk-text-small uk-margin-small-bottom">Прогресс: {{ item.progress }}%</div>
-                <progress class="uk-progress uk-margin-remove" value="{{ item.progress }}" max="100"></progress>
-            </div>
-            {% endif %}
-
         </div>
-    </div>
     {% empty %}
-    <div class="uk-width-1-1 uk-text-center uk-text-muted uk-margin-large-top">Курсы не найдены.</div>
+        <div class="uk-width-1-1 uk-text-center uk-text-muted uk-margin-large-top">Курсы не найдены.</div>
     {% endfor %}
 </div>
 
+{% if courses.has_other_pages %}
 <ul class="uk-pagination uk-flex-center uk-margin-large-top" uk-margin>
-    <li><a href="#"><span uk-pagination-previous></span></a></li>
-    <li class="uk-active"><span>1</span></li>
-    <li><a href="#">2</a></li>
-    <li><a href="#">3</a></li>
-    <li><a href="#"><span uk-pagination-next></span></a></li>
+    {% if courses.has_previous %}<li><a href="?page={{ courses.previous_page_number }}&search={{ search_query }}&status={{ request.GET.status|default:'all' }}"><span uk-pagination-previous></span></a></li>{% endif %}
+    {% for num in courses.paginator.page_range %}<li class="{% if courses.number == num %}uk-active{% endif %}"><a href="?page={{ num }}&search={{ search_query }}&status={{ request.GET.status|default:'all' }}">{{ num }}</a></li>{% endfor %}
+    {% if courses.has_next %}<li><a href="?page={{ courses.next_page_number }}&search={{ search_query }}&status={{ request.GET.status|default:'all' }}"><span uk-pagination-next></span></a></li>{% endif %}
 </ul>
-
-{% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
-<div id="modal-add-course" uk-modal>
-    <div class="uk-modal-dialog uk-modal-body">
-        <button class="uk-modal-close-default" type="button" uk-close></button>
-        <h2 class="uk-modal-title uk-h3">Добавить новый курс</h2>
-
-        <form method="POST" action="{% url 'course_add' %}">
-            {% csrf_token %}
-            <div class="uk-margin">
-                <label class="uk-form-label">Название курса</label>
-                <input class="uk-input" type="text" name="course_title" required>
-            </div>
-            <div class="uk-margin">
-                <label class="uk-form-label">Описание</label>
-                <textarea class="uk-textarea" name="description" rows="3"></textarea>
-            </div>
-            <div class="uk-margin">
-                <label class="uk-form-label">Дата начала</label>
-                <input class="uk-input" type="date" name="start_date" required>
-            </div>
-            <div class="uk-margin">
-                <label class="uk-form-label">Дата окончания</label>
-                <input class="uk-input" type="date" name="end_date" required>
-            </div>
-            <input type="hidden" name="author_id" value="{{ request.session.user_id }}">
-
-            <p class="uk-text-right">
-                <button class="uk-button uk-button-default uk-modal-close" type="button">Отмена</button>
-                <button class="uk-button uk-button-primary" type="submit">Создать</button>
-            </p>
-        </form>
-    </div>
-</div>
 {% endif %}
 
+{% if request.session.role|lower == 'teacher' or request.session.role|lower == 'преподаватель' %}
+    <div id="modal-add-course" uk-modal>
+        <div class="uk-modal-dialog uk-modal-body uk-border-rounded" style="max-width: 600px;">
+            <button class="uk-modal-close-default" type="button" uk-close></button>
+            <h2 class="uk-modal-title uk-h4 uk-text-bold">Добавить новый курс</h2>
+            <form action="{% url 'course_add' %}" method="POST">
+                {% csrf_token %}
+                <div class="uk-margin"><label class="uk-form-label">Название</label><input class="uk-input" type="text" name="course_title" required></div>
+                <div class="uk-margin"><label class="uk-form-label">Описание</label><textarea class="uk-textarea" name="description" rows="3"></textarea></div>
+                <div class="uk-grid-small" uk-grid>
+                    <div class="uk-width-1-2"><label class="uk-form-label">Дата начала</label><input class="uk-input" type="date" name="start_date" required></div>
+                    <div class="uk-width-1-2"><label class="uk-form-label">Дата окончания</label><input class="uk-input" type="date" name="end_date" required></div>
+                </div>
+
+                <div class="uk-margin">
+                    <label class="uk-form-label">Зачислить студентов:</label>
+                    <div class="uk-margin-small-bottom">
+                        <button type="button" class="uk-button uk-button-default uk-button-small" onclick="toggleStudents(true)">Выбрать всех</button>
+                        <button type="button" class="uk-button uk-button-default uk-button-small" onclick="toggleStudents(false)">Убрать всех</button>
+                    </div>
+                    <div class="uk-panel uk-panel-scrollable" style="height: 200px; border: 1px solid #e5e5e5; border-radius: 4px;">
+                        <ul class="uk-list uk-list-divider uk-margin-remove">
+                            {% for student in students_enrolled %}
+                            <li><label><input class="uk-checkbox student-checkbox" type="checkbox" name="students" value="{{ student.id }}"> {{ student.last_name }} {{ student.first_name }}</label></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="uk-margin-top uk-text-right">
+                    <button class="uk-button uk-button-default uk-modal-close" type="button">Отмена</button>
+                    <button class="uk-button uk-button-primary" type="submit">Создать курс</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        function toggleStudents(state) {
+            document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = state);
+        }
+    </script>
+{% endif %}
 {% endblock %}
